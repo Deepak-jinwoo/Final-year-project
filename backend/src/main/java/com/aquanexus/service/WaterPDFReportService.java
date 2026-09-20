@@ -86,7 +86,7 @@ public class WaterPDFReportService {
             Font bodyFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.BLACK);
             Font boldFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.BLACK);
             Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.WHITE);
-            Font noteFont = FontFactory.getFont(FontFactory.HELVETICA_ITALIC, 7, Color.DARK_GRAY);
+            Font noteFont = FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 7, Color.DARK_GRAY);
 
             // ==========================================
             // PAGE 1: PORTRAIT SUMMARY
