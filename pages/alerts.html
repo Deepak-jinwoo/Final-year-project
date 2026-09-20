@@ -1,0 +1,564 @@
+<!-- Alerts & Notification Management Page Fragment -->
+<div class="p-4 lg:p-8 max-w-[1600px] mx-auto space-y-6 page-enter">
+
+  <!-- Header & Actions -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+    <div>
+      <h2 class="text-2xl font-display font-bold text-white flex items-center gap-2">
+        <span class="material-symbols-outlined text-warning">notifications_active</span>
+        Compliance & Anomaly Alerts Center
+      </h2>
+      <p class="text-on-surface-variant text-sm mt-1">Real-time CTO limit thresholds, unaccounted water balance, and usage variance register</p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button onclick="window.location.hash='/settings'" class="bg-surface-variant/50 hover:bg-surface-variant text-white px-4 py-2.5 rounded-xl text-sm flex items-center gap-2 border border-white/5 transition-all cursor-pointer">
+        <span class="material-symbols-outlined text-base">tune</span>
+        Notification Settings
+      </button>
+      <button onclick="window.loadAlertsData()" class="bg-primary hover:bg-primary/90 text-on-primary font-bold px-4 py-2.5 rounded-xl text-sm flex items-center gap-2 shadow-lg shadow-primary/20 transition-all cursor-pointer">
+        <span class="material-symbols-outlined text-base">refresh</span>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Dynamic KPI Summary Cards -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="glass-card rounded-xl p-4">
+      <p class="text-xs text-on-surface-variant mb-1">Total Recorded Alerts</p>
+      <p class="text-xl font-display font-bold text-white" id="kpi-total-alerts">0</p>
+    </div>
+    <div class="glass-card rounded-xl p-4 border border-error/20 bg-error/5">
+      <p class="text-xs text-on-surface-variant mb-1">Open Critical Breaches</p>
+      <p class="text-xl font-display font-bold text-error flex items-center gap-2" id="kpi-open-critical">
+        0
+        <span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
+      </p>
+    </div>
+    <div class="glass-card rounded-xl p-4 border border-warning/20 bg-warning/5">
+      <p class="text-xs text-on-surface-variant mb-1">Open Warnings</p>
+      <p class="text-xl font-display font-bold text-warning" id="kpi-open-warning">0</p>
+    </div>
+    <div class="glass-card rounded-xl p-4 border border-success/20 bg-success/5">
+      <p class="text-xs text-on-surface-variant mb-1">Resolved Audits</p>
+      <p class="text-xl font-display font-bold text-success" id="kpi-resolved-count">0</p>
+    </div>
+  </div>
+
+  <!-- Main Alerts Table Glass Card -->
+  <div class="glass-card rounded-2xl overflow-hidden flex flex-col border border-white/10">
+
+    <!-- Filters Toolbar -->
+    <div class="p-4 border-b border-white/10 flex flex-col lg:flex-row gap-3 justify-between items-stretch lg:items-center bg-white/5">
+      
+      <div class="relative flex-1 max-w-xs">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+        <input type="text" id="alert-search" onkeyup="window.filterAlertsLocally()" placeholder="Search alert, message, dept..." class="w-full bg-surface-variant/50 border border-transparent rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:outline-none focus:bg-surface transition-all">
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 flex-wrap">
+        <!-- Severity Filter -->
+        <select id="filter-severity" onchange="window.loadAlertsData()" class="bg-surface-variant/50 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none">
+          <option value="ALL">All Severities</option>
+          <option value="CRITICAL">Critical</option>
+          <option value="WARNING">Warning</option>
+          <option value="INFO">Info</option>
+        </select>
+
+        <!-- Status Filter -->
+        <select id="filter-status" onchange="window.loadAlertsData()" class="bg-surface-variant/50 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none">
+          <option value="ALL">All Statuses</option>
+          <option value="OPEN">Open Only</option>
+          <option value="ACKNOWLEDGED">Acknowledged</option>
+          <option value="RESOLVED">Resolved</option>
+        </select>
+
+        <!-- Department Filter -->
+        <select id="filter-department" onchange="window.loadAlertsData()" class="bg-surface-variant/50 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none">
+          <option value="ALL">All Departments</option>
+          <option value="Production">Production</option>
+          <option value="Dairy Processing">Dairy Processing</option>
+          <option value="Cooling Tower">Cooling Tower</option>
+          <option value="CIP Cleaning">CIP Cleaning</option>
+          <option value="Utilities">Utilities</option>
+        </select>
+
+        <!-- Alert Type Filter -->
+        <select id="filter-type" onchange="window.loadAlertsData()" class="bg-surface-variant/50 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none">
+          <option value="ALL">All Alert Types</option>
+          <option value="CTO_EXCEEDED">CTO Exceeded</option>
+          <option value="CTO_CRITICAL">CTO Critical</option>
+          <option value="CTO_WARNING">CTO Warning</option>
+          <option value="UNACCOUNTED_WATER">Unaccounted Water</option>
+          <option value="LOW_REUSE">Low Reuse</option>
+          <option value="UNTAPPED_REUSE">Untapped Reuse</option>
+          <option value="ABNORMAL_USAGE">Abnormal Usage</option>
+          <option value="MONTHLY_COMPLIANCE_SUMMARY">Monthly Summary</option>
+        </select>
+      </div>
+
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto w-full">
+      <table class="w-full text-left border-collapse min-w-[1000px]">
+        <thead>
+          <tr class="bg-surface/50 border-b border-white/10 text-xs uppercase tracking-wider text-on-surface-variant font-medium">
+            <th class="px-5 py-4">Date & Dept</th>
+            <th class="px-5 py-4">Severity & Type</th>
+            <th class="px-5 py-4">Alert Title & Details</th>
+            <th class="px-5 py-4 text-center">Status</th>
+            <th class="px-5 py-4 text-center">Notifications</th>
+            <th class="px-5 py-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="alerts-table-body" class="text-sm divide-y divide-white/5 bg-transparent">
+          <tr>
+            <td colspan="6" class="px-6 py-12 text-center text-on-surface-variant">
+              Loading alerts...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer -->
+    <div class="p-4 border-t border-white/10 flex items-center justify-between text-xs text-on-surface-variant">
+      <span id="alerts-count-label">Showing 0 alerts</span>
+      <span class="text-xs text-on-surface-variant/70">Verified in real-time by AquaNexus Alert Engine</span>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ALERT DETAIL MODAL -->
+<div id="alert-detail-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md hidden">
+  <div class="glass-card rounded-2xl border border-white/10 w-full max-w-2xl p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+    
+    <div class="flex justify-between items-center border-b border-white/10 pb-3 flex-shrink-0">
+      <div>
+        <h3 class="text-lg font-bold text-white flex items-center gap-2" id="detail-modal-title">
+          <span class="material-symbols-outlined text-primary">info</span>
+          Alert Details
+        </h3>
+        <p class="text-xs text-on-surface-variant mt-0.5" id="detail-modal-subtitle">Compliance event analysis</p>
+      </div>
+      <button onclick="window.closeDetailModal()" class="text-on-surface-variant hover:text-white transition-colors p-1 rounded-lg">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto space-y-4 pr-1 text-sm">
+      <div id="detail-badge-row" class="flex gap-2 items-center flex-wrap"></div>
+
+      <div class="bg-surface-variant/30 rounded-xl p-4 space-y-2 border border-white/5">
+        <p class="text-xs text-on-surface-variant font-medium">Alert Message</p>
+        <p class="text-white font-medium" id="detail-message"></p>
+        
+        <p class="text-xs text-on-surface-variant font-medium pt-2">Reason / Explanation</p>
+        <p class="text-on-surface-variant text-xs leading-relaxed" id="detail-explanation"></p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div class="glass-card p-3 rounded-xl">
+          <span class="text-on-surface-variant block mb-1">Target Department</span>
+          <span class="font-bold text-white" id="detail-dept"></span>
+        </div>
+        <div class="glass-card p-3 rounded-xl">
+          <span class="text-on-surface-variant block mb-1">Event Date</span>
+          <span class="font-bold text-white" id="detail-date"></span>
+        </div>
+      </div>
+
+      <div id="detail-resolution-box" class="hidden glass-card p-4 rounded-xl border border-success/20 bg-success/5 space-y-1 text-xs">
+        <p class="font-bold text-success flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-sm">check_circle</span>
+          Resolved Audit Record
+        </p>
+        <p class="text-white">Resolved by: <span id="detail-resolved-by" class="font-medium"></span> on <span id="detail-resolved-at"></span></p>
+        <p class="text-on-surface-variant mt-1" id="detail-resolution-notes"></p>
+      </div>
+
+      <div class="space-y-2">
+        <p class="text-xs font-bold text-white flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-sm text-primary">history</span>
+          Notification Delivery History
+        </p>
+        <div id="detail-notification-logs" class="text-xs space-y-2"></div>
+      </div>
+    </div>
+
+    <div class="flex justify-between items-center pt-3 border-t border-white/10 flex-shrink-0">
+      <button type="button" onclick="window.resendCurrentAlertNotification()" id="btn-modal-resend" class="bg-surface-variant/50 hover:bg-surface-variant text-white px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 border border-white/5 transition-colors">
+        <span class="material-symbols-outlined text-sm">send</span>
+        Resend Notification
+      </button>
+
+      <div class="flex gap-2" id="detail-action-buttons">
+        <button type="button" onclick="window.closeDetailModal()" class="px-4 py-2 rounded-xl font-medium text-xs text-on-surface-variant hover:text-white transition-colors">
+          Close
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- RESOLVE MODAL -->
+<div id="resolve-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md hidden">
+  <div class="glass-card rounded-2xl border border-white/10 w-full max-w-md p-6 shadow-2xl space-y-4">
+    <div class="flex justify-between items-center border-b border-white/10 pb-3">
+      <h3 class="text-lg font-bold text-white flex items-center gap-2">
+        <span class="material-symbols-outlined text-success">task_alt</span>
+        Resolve Alert & Add Audit Notes
+      </h3>
+      <button onclick="window.closeResolveModal()" class="text-on-surface-variant hover:text-white p-1 rounded-lg">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <form onsubmit="window.submitResolveAlert(event)" class="space-y-4">
+      <input type="hidden" id="resolve-alert-id">
+      
+      <div>
+        <label class="block text-on-surface-variant text-xs mb-1 font-medium">Resolved By (Officer Name)</label>
+        <input type="text" id="resolve-officer" required placeholder="Compliance Officer" class="w-full bg-surface-variant/50 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-primary">
+      </div>
+
+      <div>
+        <label class="block text-on-surface-variant text-xs mb-1 font-medium">Corrective Action / Resolution Notes</label>
+        <textarea id="resolve-notes" rows="3" required placeholder="e.g., Meter recalibrated, recycling pump line engaged, valves inspected." class="w-full bg-surface-variant/50 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-primary"></textarea>
+      </div>
+
+      <div id="resolve-status" class="hidden p-3 rounded-xl text-xs"></div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button type="button" onclick="window.closeResolveModal()" class="px-4 py-2 rounded-xl font-medium text-xs text-on-surface-variant hover:text-white">
+          Cancel
+        </button>
+        <button type="submit" id="btn-submit-resolve" class="bg-success hover:bg-success/90 text-white font-bold px-5 py-2 rounded-xl text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer">
+          <span class="material-symbols-outlined text-sm">check</span>
+          Confirm Resolution
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Shell UI visibility
+  document.getElementById('app-sidebar').classList.remove('hidden');
+  document.getElementById('app-sidebar').classList.add('md:flex');
+  document.getElementById('app-header').classList.remove('hidden');
+  document.getElementById('app-bottom-nav').classList.remove('hidden');
+  document.getElementById('page-title').innerText = "Alerts & Notifications";
+
+  var currentAlerts = [];
+  var selectedAlert = null;
+
+  // ===== LOAD ALERTS DATA =====
+  window.loadAlertsData = async function() {
+    var tbody = document.getElementById('alerts-table-body');
+    var sev = document.getElementById('filter-severity').value;
+    var stat = document.getElementById('filter-status').value;
+    var dept = document.getElementById('filter-department').value;
+    var type = document.getElementById('filter-type').value;
+
+    var filters = { severity: sev, status: stat, department: dept, type: type };
+
+    try {
+      if (window.AppState) {
+        currentAlerts = await window.AppState.fetchAlerts(filters);
+      } else {
+        var query = '?';
+        if (sev && sev !== 'ALL') query += 'severity=' + encodeURIComponent(sev) + '&';
+        if (stat && stat !== 'ALL') query += 'status=' + encodeURIComponent(stat) + '&';
+        if (dept && dept !== 'ALL') query += 'department=' + encodeURIComponent(dept) + '&';
+        if (type && type !== 'ALL') query += 'type=' + encodeURIComponent(type) + '&';
+        var res = await fetch('http://localhost:8080/api/alerts' + query);
+        currentAlerts = await res.json();
+      }
+      renderAlertsTable(currentAlerts);
+      updateKpis();
+    } catch (err) {
+      console.warn('Error fetching alerts:', err);
+      currentAlerts = [];
+      renderAlertsTable([]);
+      updateKpis();
+    }
+  };
+
+  // ===== RENDER TABLE =====
+  function renderAlertsTable(alerts) {
+    var tbody = document.getElementById('alerts-table-body');
+    if (!alerts || alerts.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-on-surface-variant"><div class="font-bold text-base text-white mb-1">No alerts match the selected criteria.</div><div class="text-xs">System operations and water abstraction remain within normal parameters.</div></td></tr>';
+      document.getElementById('alerts-count-label').innerText = 'Showing 0 alerts';
+      return;
+    }
+
+    document.getElementById('alerts-count-label').innerText = 'Showing ' + alerts.length + ' alerts';
+
+    var html = '';
+    alerts.forEach(function(a) {
+      // Severity Badge
+      var sevBadge = '';
+      if (a.severity === 'CRITICAL') {
+        sevBadge = '<span class="inline-flex items-center gap-1 bg-error/15 text-error text-xs font-bold px-2.5 py-1 rounded-full border border-error/30"><span class="w-1.5 h-1.5 rounded-full bg-error animate-pulse"></span> CRITICAL</span>';
+      } else if (a.severity === 'WARNING') {
+        sevBadge = '<span class="inline-flex items-center gap-1 bg-warning/15 text-warning text-xs font-bold px-2.5 py-1 rounded-full border border-warning/30"><span class="w-1.5 h-1.5 rounded-full bg-warning"></span> WARNING</span>';
+      } else {
+        sevBadge = '<span class="inline-flex items-center gap-1 bg-info/15 text-info text-xs font-bold px-2.5 py-1 rounded-full border border-info/30">INFO</span>';
+      }
+
+      // Status Badge
+      var statBadge = '';
+      if (a.status === 'RESOLVED') {
+        statBadge = '<span class="inline-flex items-center gap-1 bg-success/15 text-success text-xs font-medium px-2.5 py-1 rounded-full border border-success/30"><span class="material-symbols-outlined text-xs">done</span> Resolved</span>';
+      } else if (a.status === 'ACKNOWLEDGED') {
+        statBadge = '<span class="inline-flex items-center gap-1 bg-info/15 text-info text-xs font-medium px-2.5 py-1 rounded-full border border-info/30"><span class="material-symbols-outlined text-xs">visibility</span> Ack</span>';
+      } else {
+        statBadge = '<span class="inline-flex items-center gap-1 bg-error/10 text-error text-xs font-bold px-2.5 py-1 rounded-full border border-error/20"><span class="w-1.5 h-1.5 rounded-full bg-error"></span> Open</span>';
+      }
+
+      // Notification Badges
+      var emailBadge = a.emailSent ?
+        '<span class="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded border border-primary/30 font-mono-data" title="Email Dispatched">EMAIL</span>' :
+        '<span class="text-[10px] text-on-surface-variant/50">email -</span>';
+      
+      var smsBadge = a.smsSent ?
+        '<span class="text-[10px] bg-secondary/20 text-secondary px-1.5 py-0.5 rounded border border-secondary/30 font-mono-data" title="SMS Dispatched">SMS</span>' :
+        '<span class="text-[10px] text-on-surface-variant/50">sms -</span>';
+
+      html += '<tr class="hover:bg-white/5 transition-colors cursor-pointer" onclick="window.openDetailModal(' + a.id + ')">';
+      html += '<td class="px-5 py-3.5"><div class="font-bold text-white">' + (a.date || 'N/A') + '</div><div class="text-xs text-on-surface-variant">' + (a.department || 'General') + '</div></td>';
+      html += '<td class="px-5 py-3.5"><div class="mb-1">' + sevBadge + '</div><div class="text-xs font-mono-data text-on-surface-variant">' + (a.alertType || '').replace(/_/g, ' ') + '</div></td>';
+      html += '<td class="px-5 py-3.5 max-w-xs md:max-w-md"><div class="font-bold text-white truncate">' + (a.title || 'Water Compliance Event') + '</div><div class="text-xs text-on-surface-variant truncate">' + (a.message || '') + '</div></td>';
+      html += '<td class="px-5 py-3.5 text-center">' + statBadge + '</td>';
+      html += '<td class="px-5 py-3.5 text-center"><div class="flex items-center justify-center gap-1">' + emailBadge + smsBadge + '</div></td>';
+      html += '<td class="px-5 py-3.5 text-right" onclick="event.stopPropagation()">';
+      html += '<div class="flex items-center justify-end gap-1.5">';
+      
+      if (a.status !== 'RESOLVED') {
+        html += '<button onclick="window.openResolveModal(' + a.id + ')" class="text-xs bg-success/15 hover:bg-success/25 text-success border border-success/30 px-2.5 py-1 rounded-lg transition-colors font-medium" title="Resolve Alert">Resolve</button>';
+      }
+      html += '<button onclick="window.openDetailModal(' + a.id + ')" class="text-on-surface-variant hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors" title="Inspect Details"><span class="material-symbols-outlined text-base">visibility</span></button>';
+      html += '</div></td>';
+      html += '</tr>';
+    });
+
+    tbody.innerHTML = html;
+  }
+
+  // ===== UPDATE KPIS =====
+  async function updateKpis() {
+    try {
+      var res = await fetch('http://localhost:8080/api/alerts/summary');
+      if (res.ok) {
+        var s = await res.json();
+        document.getElementById('kpi-total-alerts').innerText = s.totalAlerts || 0;
+        document.getElementById('kpi-open-critical').innerHTML = (s.openCritical || 0) + (s.openCritical > 0 ? ' <span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>' : '');
+        document.getElementById('kpi-open-warning').innerText = s.openWarning || 0;
+        document.getElementById('kpi-resolved-count').innerText = s.resolvedCount || 0;
+        return;
+      }
+    } catch (e) {}
+
+    // Fallback local calc
+    var total = currentAlerts.length;
+    var openCrit = currentAlerts.filter(function(a) { return a.severity === 'CRITICAL' && a.status !== 'RESOLVED'; }).length;
+    var openWarn = currentAlerts.filter(function(a) { return a.severity === 'WARNING' && a.status !== 'RESOLVED'; }).length;
+    var resolved = currentAlerts.filter(function(a) { return a.status === 'RESOLVED'; }).length;
+
+    document.getElementById('kpi-total-alerts').innerText = total;
+    document.getElementById('kpi-open-critical').innerHTML = openCrit + (openCrit > 0 ? ' <span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>' : '');
+    document.getElementById('kpi-open-warning').innerText = openWarn;
+    document.getElementById('kpi-resolved-count').innerText = resolved;
+  }
+
+  // ===== FILTER LOCALLY =====
+  window.filterAlertsLocally = function() {
+    var q = document.getElementById('alert-search').value.toLowerCase();
+    var filtered = currentAlerts.filter(function(a) {
+      return (a.title && a.title.toLowerCase().indexOf(q) !== -1) ||
+             (a.message && a.message.toLowerCase().indexOf(q) !== -1) ||
+             (a.department && a.department.toLowerCase().indexOf(q) !== -1) ||
+             (a.alertType && a.alertType.toLowerCase().indexOf(q) !== -1);
+    });
+    renderAlertsTable(filtered);
+  };
+
+  // ===== OPEN DETAIL MODAL =====
+  window.openDetailModal = async function(id) {
+    selectedAlert = currentAlerts.find(function(a) { return a.id == id; });
+    if (!selectedAlert) return;
+
+    document.getElementById('detail-modal-title').innerHTML = '<span class="material-symbols-outlined text-primary">info</span> ' + (selectedAlert.title || 'Water Compliance Event');
+    document.getElementById('detail-modal-subtitle').innerText = 'Alert Type: ' + selectedAlert.alertType;
+    document.getElementById('detail-message').innerText = selectedAlert.message || 'No additional message';
+    document.getElementById('detail-explanation').innerText = selectedAlert.explanation || 'Calculated automatically by AquaNexus analytics engine.';
+    document.getElementById('detail-dept').innerText = selectedAlert.department || 'All Departments';
+    document.getElementById('detail-date').innerText = selectedAlert.date || 'N/A';
+
+    // Badges Row
+    var bHtml = '';
+    if (selectedAlert.severity === 'CRITICAL') {
+      bHtml += '<span class="bg-error/20 text-error px-2.5 py-1 rounded-full text-xs font-bold border border-error/30">CRITICAL</span>';
+    } else if (selectedAlert.severity === 'WARNING') {
+      bHtml += '<span class="bg-warning/20 text-warning px-2.5 py-1 rounded-full text-xs font-bold border border-warning/30">WARNING</span>';
+    } else {
+      bHtml += '<span class="bg-info/20 text-info px-2.5 py-1 rounded-full text-xs font-bold border border-info/30">INFO</span>';
+    }
+    bHtml += '<span class="bg-surface-variant text-white px-2.5 py-1 rounded-full text-xs font-bold">' + selectedAlert.status + '</span>';
+    document.getElementById('detail-badge-row').innerHTML = bHtml;
+
+    // Resolution box
+    var rBox = document.getElementById('detail-resolution-box');
+    if (selectedAlert.status === 'RESOLVED' || selectedAlert.isResolved) {
+      rBox.classList.remove('hidden');
+      document.getElementById('detail-resolved-by').innerText = selectedAlert.resolvedBy || 'Compliance Officer';
+      document.getElementById('detail-resolved-at').innerText = selectedAlert.resolvedAt ? selectedAlert.resolvedAt.replace('T', ' ').substring(0, 19) : 'Recorded';
+      document.getElementById('detail-resolution-notes').innerText = selectedAlert.resolutionNotes || 'No notes provided.';
+    } else {
+      rBox.classList.add('hidden');
+    }
+
+    // Load Notification Logs
+    loadNotificationLogsForDetail(selectedAlert.id);
+
+    // Setup action buttons
+    var actionsBox = document.getElementById('detail-action-buttons');
+    var actHtml = '';
+    if (selectedAlert.status === 'OPEN') {
+      actHtml += '<button type="button" onclick="window.acknowledgeAlert(' + selectedAlert.id + ')" class="bg-info/20 hover:bg-info/30 text-info px-4 py-2 rounded-xl text-xs font-bold transition-colors">Acknowledge</button>';
+    }
+    if (selectedAlert.status !== 'RESOLVED') {
+      actHtml += '<button type="button" onclick="window.closeDetailModal(); window.openResolveModal(' + selectedAlert.id + ')" class="bg-success hover:bg-success/90 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all">Resolve Alert</button>';
+    }
+    actHtml += '<button type="button" onclick="window.closeDetailModal()" class="px-4 py-2 rounded-xl font-medium text-xs text-on-surface-variant hover:text-white transition-colors">Close</button>';
+    actionsBox.innerHTML = actHtml;
+
+    document.getElementById('alert-detail-modal').classList.remove('hidden');
+  };
+
+  async function loadNotificationLogsForDetail(alertId) {
+    var container = document.getElementById('detail-notification-logs');
+    container.innerHTML = '<p class="text-on-surface-variant italic">Loading notification dispatch logs...</p>';
+
+    try {
+      var res = await fetch('http://localhost:8080/api/notification-logs?alertId=' + alertId);
+      if (!res.ok) throw new Error();
+      var logs = await res.json();
+      if (!logs || logs.length === 0) {
+        container.innerHTML = '<p class="text-on-surface-variant">No notification logs recorded for this alert.</p>';
+        return;
+      }
+
+      var lHtml = '';
+      logs.forEach(function(l) {
+        var statusColor = (l.deliveryStatus === 'SENT' || l.deliveryStatus === 'SIMULATED') ? 'text-success' : 'text-error';
+        lHtml += '<div class="glass-card p-2.5 rounded-lg flex items-center justify-between border border-white/5">';
+        lHtml += '<div><span class="font-bold text-white">' + l.channel + '</span> to <span class="text-on-surface-variant font-mono-data">' + l.recipientAddress + '</span></div>';
+        lHtml += '<div class="flex items-center gap-2"><span class="font-bold ' + statusColor + '">' + l.deliveryStatus + '</span><span class="text-[10px] text-on-surface-variant">' + (l.sentAt || l.createdAt || '').substring(0, 16) + '</span></div>';
+        lHtml += '</div>';
+      });
+      container.innerHTML = lHtml;
+    } catch (e) {
+      container.innerHTML = '<div class="glass-card p-2.5 rounded-lg text-success">Dispatched via automated compliance channels (SIMULATED mode).</div>';
+    }
+  }
+
+  window.closeDetailModal = function() {
+    document.getElementById('alert-detail-modal').classList.add('hidden');
+  };
+
+  // ===== ACKNOWLEDGE ALERT =====
+  window.acknowledgeAlert = async function(id) {
+    try {
+      await fetch('http://localhost:8080/api/alerts/' + id + '/acknowledge', { method: 'PATCH' });
+    } catch (e) {}
+    window.closeDetailModal();
+    window.loadAlertsData();
+  };
+
+  // ===== RESOLVE MODAL =====
+  window.openResolveModal = function(id) {
+    document.getElementById('resolve-alert-id').value = id;
+    document.getElementById('resolve-status').classList.add('hidden');
+    var saved = JSON.parse(localStorage.getItem('aquanexus_saved_company') || '{}');
+    if (saved.responsibleOfficer) {
+      document.getElementById('resolve-officer').value = saved.responsibleOfficer;
+    }
+    document.getElementById('resolve-modal').classList.remove('hidden');
+  };
+
+  window.closeResolveModal = function() {
+    document.getElementById('resolve-modal').classList.add('hidden');
+  };
+
+  window.submitResolveAlert = async function(e) {
+    if (e) e.preventDefault();
+    var id = document.getElementById('resolve-alert-id').value;
+    var officer = document.getElementById('resolve-officer').value;
+    var notes = document.getElementById('resolve-notes').value;
+    var btn = document.getElementById('btn-submit-resolve');
+    var statusEl = document.getElementById('resolve-status');
+
+    if (btn) btn.disabled = true;
+
+    try {
+      var res = await fetch('http://localhost:8080/api/alerts/' + id + '/resolve', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resolvedBy: officer, resolutionNotes: notes })
+      });
+      if (!res.ok) throw new Error('Failed to resolve');
+
+      statusEl.className = 'p-3 rounded-xl text-xs bg-success/10 text-success border border-success/20';
+      statusEl.innerText = 'Alert marked as Resolved successfully!';
+      statusEl.classList.remove('hidden');
+
+      setTimeout(function() {
+        window.closeResolveModal();
+        window.loadAlertsData();
+      }, 1000);
+    } catch (err) {
+      // Local fallback
+      var target = currentAlerts.find(function(a) { return a.id == id; });
+      if (target) {
+        target.status = 'RESOLVED';
+        target.isResolved = true;
+        target.resolvedBy = officer;
+        target.resolutionNotes = notes;
+      }
+      window.closeResolveModal();
+      renderAlertsTable(currentAlerts);
+      updateKpis();
+    }
+
+    if (btn) btn.disabled = false;
+  };
+
+  // ===== RESEND NOTIFICATION =====
+  window.resendCurrentAlertNotification = async function() {
+    if (!selectedAlert) return;
+    var btn = document.getElementById('btn-modal-resend');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">sync</span> Sending...'; }
+
+    try {
+      var res = await fetch('http://localhost:8080/api/alerts/' + selectedAlert.id + '/resend-notification', { method: 'POST' });
+      var data = await res.json();
+      alert('Notification triggered: ' + (data.message || 'Dispatched'));
+      loadNotificationLogsForDetail(selectedAlert.id);
+    } catch (err) {
+      alert('Notification simulated for alert ID ' + selectedAlert.id);
+    }
+
+    if (btn) { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined text-sm">send</span> Resend Notification'; }
+  };
+
+  // ===== INIT =====
+  window.loadAlertsData();
+</script>

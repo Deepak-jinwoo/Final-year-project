@@ -1,0 +1,419 @@
+<!-- CTO & AI Insights Page Fragment -->
+<div class="p-4 lg:p-8 max-w-[1600px] mx-auto space-y-6 page-enter">
+  
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+    <div>
+      <h2 class="text-2xl font-display font-bold text-white flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">psychology</span>
+        AI Intelligence & XGBoost Predictive Center
+      </h2>
+      <p class="text-on-surface-variant text-sm mt-1">XGBoost regression forecasting & Isolation Forest anomaly detection</p>
+    </div>
+    
+    <div class="flex items-center gap-3 bg-surface/50 border border-white/10 rounded-xl px-4 py-2">
+      <div class="w-2 h-2 rounded-full bg-success animate-pulse"></div>
+      <span class="text-sm font-medium text-white">XGBoost + Isolation Forest Active</span>
+      <span class="text-xs text-on-surface-variant border-l border-white/20 pl-3 ml-1" id="ml-status-label">Port 5000 Live</span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    <!-- Left Column: System Health & Next Day Predictions -->
+    <div class="lg:col-span-1 space-y-6">
+      
+      <!-- System Health Score -->
+      <div class="glass-card rounded-2xl p-6 text-center">
+        <h3 class="text-lg font-bold text-white mb-6">Overall AI Health Score</h3>
+        
+        <div class="relative w-48 h-48 mx-auto flex items-center justify-center">
+          <svg class="w-full h-full radial-progress" viewBox="0 0 100 100">
+            <circle class="text-surface-variant/30 stroke-current" stroke-width="8" cx="50" cy="50" r="40" fill="transparent"></circle>
+            <circle id="radial-progress-circle" class="text-success stroke-current" stroke-width="8" stroke-linecap="round" cx="50" cy="50" r="40" fill="transparent" stroke-dasharray="251.2" stroke-dashoffset="20.096" style="transition: stroke-dashoffset 1.5s ease-in-out;"></circle>
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <span class="text-5xl font-display font-bold text-white" id="health-score-val">92</span>
+            <span class="text-sm font-bold text-success mt-1" id="health-score-status">OPTIMAL</span>
+          </div>
+        </div>
+        
+        <p class="text-sm text-on-surface-variant mt-6 px-4" id="health-desc">Driven by XGBoost & Isolation Forest model evaluation.</p>
+      </div>
+
+      <!-- Live ML Forecast Card -->
+      <div class="glass-card rounded-2xl p-6 space-y-4">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary">insights</span>
+          Next-Day Predictions
+        </h3>
+        
+        <div class="space-y-3">
+          <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+            <div>
+              <p class="text-xs text-on-surface-variant">Predicted Fresh Water</p>
+              <p class="text-lg font-bold text-white font-mono-data" id="ml-pred-fresh">-- L</p>
+            </div>
+            <span class="text-xs bg-info/10 text-info px-2 py-1 rounded">XGBoost</span>
+          </div>
+
+          <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+            <div>
+              <p class="text-xs text-on-surface-variant">Predicted Reused Water</p>
+              <p class="text-lg font-bold text-success font-mono-data" id="ml-pred-reused">-- L</p>
+            </div>
+            <span class="text-xs bg-success/10 text-success px-2 py-1 rounded">XGBoost</span>
+          </div>
+
+          <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
+            <div>
+              <p class="text-xs text-on-surface-variant">Forecasted CTO Compliance</p>
+              <p class="text-sm font-bold text-white" id="ml-pred-compliance">COMPLIANT</p>
+            </div>
+            <span class="text-xs bg-secondary/10 text-secondary px-2 py-1 rounded" id="ml-pred-conf">High Conf</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: AI Insights & Projections -->
+    <div class="lg:col-span-2 space-y-6">
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Insight Card 1 -->
+        <div class="glass-card rounded-2xl p-5 border-l-4 border-l-info">
+          <div class="flex items-start gap-4">
+            <div class="p-2 rounded-lg bg-info/10 text-info">
+              <span class="material-symbols-outlined">trending_down</span>
+            </div>
+            <div>
+              <h4 class="text-sm font-bold text-white mb-1">XGBoost Consumption Trend</h4>
+              <p class="text-xs text-on-surface-variant mb-3" id="insight-text-1">Next-day water consumption forecast is calculated from 14-day rolling averages and lag features.</p>
+              <button onclick="window.location.hash='/consumption'" class="text-xs font-bold text-info hover:text-white transition-colors flex items-center gap-1">
+                Inspect Records <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Insight Card 2 -->
+        <div class="glass-card rounded-2xl p-5 border-l-4 border-l-warning">
+          <div class="flex items-start gap-4">
+            <div class="p-2 rounded-lg bg-warning/10 text-warning">
+              <span class="material-symbols-outlined">warning</span>
+            </div>
+            <div>
+              <h4 class="text-sm font-bold text-white mb-1">Isolation Forest Anomaly Check</h4>
+              <p class="text-xs text-on-surface-variant mb-3" id="insight-text-2">Evaluates water loss ratio and fresh water spikes to detect potential underground pipe leaks.</p>
+              <button onclick="window.location.hash='/consumption'" class="text-xs font-bold text-warning hover:text-white transition-colors flex items-center gap-1">
+                View Anomaly Alerts <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Projection Chart (Bar) -->
+      <div class="glass-card rounded-2xl p-6 h-80 flex flex-col">
+        <h3 class="text-lg font-bold text-white mb-1">7-Day Demand Projection vs Actuals</h3>
+        <p class="text-sm text-on-surface-variant mb-6">XGBoost forecasted fresh water (Liters)</p>
+        
+        <div class="flex-1 flex items-end gap-2 sm:gap-4 px-2 pb-2">
+          
+          <div class="flex-1 flex flex-col justify-end items-center group">
+            <div class="w-full max-w-[40px] flex items-end justify-center gap-1 relative">
+              <div class="w-1/2 bg-primary/80 rounded-t-sm" style="height: 60%;"></div>
+              <div class="w-1/2 bg-surface-variant rounded-t-sm border border-dashed border-white/20" style="height: 65%;"></div>
+            </div>
+            <span class="text-xs text-on-surface-variant mt-2 font-medium">Mon</span>
+          </div>
+
+          <div class="flex-1 flex flex-col justify-end items-center group">
+            <div class="w-full max-w-[40px] flex items-end justify-center gap-1 relative">
+              <div class="w-1/2 bg-primary/80 rounded-t-sm" style="height: 80%;"></div>
+              <div class="w-1/2 bg-surface-variant rounded-t-sm border border-dashed border-white/20" style="height: 78%;"></div>
+            </div>
+            <span class="text-xs text-on-surface-variant mt-2 font-medium">Tue</span>
+          </div>
+
+          <div class="flex-1 flex flex-col justify-end items-center group">
+            <div class="w-full max-w-[40px] flex items-end justify-center gap-1 relative">
+              <div class="w-1/2 bg-primary/80 rounded-t-sm" style="height: 50%;"></div>
+              <div class="w-1/2 bg-surface-variant rounded-t-sm border border-dashed border-white/20" style="height: 52%;"></div>
+            </div>
+            <span class="text-xs text-on-surface-variant mt-2 font-medium">Wed</span>
+          </div>
+
+          <div class="flex-1 flex flex-col justify-end items-center group">
+            <div class="w-full max-w-[40px] flex items-end justify-center gap-1 relative">
+              <div class="w-1/2 bg-primary/80 rounded-t-sm" style="height: 70%;"></div>
+              <div class="w-1/2 bg-surface-variant rounded-t-sm border border-dashed border-white/20" style="height: 72%;"></div>
+            </div>
+            <span class="text-xs text-on-surface-variant mt-2 font-medium">Thu</span>
+          </div>
+
+          <div class="flex-1 flex flex-col justify-end items-center group">
+            <div class="w-full max-w-[40px] flex items-end justify-center gap-1 relative">
+              <div class="w-1/2 bg-primary/80 rounded-t-sm" style="height: 85%;"></div>
+              <div class="w-1/2 bg-surface-variant rounded-t-sm border border-dashed border-white/20" style="height: 88%;"></div>
+            </div>
+            <span class="text-xs text-on-surface-variant mt-2 font-medium">Fri</span>
+          </div>
+
+          <div class="flex-1 flex flex-col justify-end items-center group opacity-50">
+            <div class="w-full max-w-[40px] flex items-end justify-center gap-1 relative">
+              <div class="w-1/2 bg-transparent" style="height: 0%;"></div>
+              <div class="w-1/2 bg-secondary/30 rounded-t-sm border border-dashed border-secondary/50" style="height: 45%;"></div>
+            </div>
+            <span class="text-xs text-on-surface-variant mt-2 font-medium">Sat</span>
+          </div>
+
+          <div class="flex-1 flex flex-col justify-end items-center group opacity-50">
+            <div class="w-full max-w-[40px] flex items-end justify-center gap-1 relative">
+              <div class="w-1/2 bg-transparent" style="height: 0%;"></div>
+              <div class="w-1/2 bg-secondary/30 rounded-t-sm border border-dashed border-secondary/50" style="height: 40%;"></div>
+            </div>
+            <span class="text-xs text-on-surface-variant mt-2 font-medium">Sun</span>
+          </div>
+
+        </div>
+        
+        <div class="flex justify-center gap-6 mt-4 pt-4 border-t border-white/10">
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-sm bg-primary"></div>
+            <span class="text-xs text-on-surface-variant">Actual Usage</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-sm border border-dashed border-white/40 bg-surface-variant"></div>
+            <span class="text-xs text-on-surface-variant">XGBoost Forecast</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- WATER REUSE RECOMMENDATIONS MODULE -->
+  <!-- ========================================================= -->
+  <div class="space-y-4 pt-4">
+    
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-white/10 pb-4">
+      <div>
+        <h3 class="text-xl font-display font-bold text-white flex items-center gap-2">
+          <span class="material-symbols-outlined text-success">recycling</span>
+          WATER REUSE RECOMMENDATIONS
+        </h3>
+        <p class="text-on-surface-variant text-sm mt-0.5">Based on your current water usage and reuse data</p>
+      </div>
+      <div class="text-xs bg-success/10 text-success border border-success/20 px-3 py-1.5 rounded-xl font-medium">
+        Decision Support Engine Active
+      </div>
+    </div>
+
+    <!-- Overview Bar Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="glass-card rounded-xl p-4">
+        <p class="text-xs text-on-surface-variant mb-1">Reusable Water Available</p>
+        <p class="text-xl font-display font-bold text-white" id="rec-avail-water">0 <span class="text-xs font-normal text-on-surface-variant">L</span></p>
+      </div>
+      <div class="glass-card rounded-xl p-4">
+        <p class="text-xs text-on-surface-variant mb-1">Potential Fresh Water Saving</p>
+        <p class="text-xl font-display font-bold text-success" id="rec-potential-saving">0 <span class="text-xs font-normal text-on-surface-variant">L/day</span></p>
+      </div>
+      <div class="glass-card rounded-xl p-4">
+        <p class="text-xs text-on-surface-variant mb-1">Top Recommended Reuse</p>
+        <p class="text-base font-bold text-white truncate" id="rec-top-reuse">None</p>
+      </div>
+      <div class="glass-card rounded-xl p-4 gold-border">
+        <p class="text-xs text-on-surface-variant mb-1">Quality Verification</p>
+        <p class="text-base font-bold text-warning" id="rec-quality-status">Required</p>
+      </div>
+    </div>
+
+    <!-- Recommendation Cards Container -->
+    <div id="recommendations-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div class="col-span-full glass-card rounded-2xl p-8 text-center text-on-surface-variant space-y-2">
+        <span class="material-symbols-outlined text-3xl text-on-surface-variant/50">water_drop</span>
+        <h4 class="text-base font-bold text-white">No water data available for recommendations.</h4>
+        <p class="text-xs text-on-surface-variant">Add daily water usage data to generate reuse recommendations.</p>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- REQUIREMENTS MODAL -->
+<div id="req-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md hidden">
+  <div class="glass-card rounded-2xl border border-white/10 w-full max-w-lg p-6 shadow-2xl space-y-4">
+    <div class="flex justify-between items-center border-b border-white/10 pb-3">
+      <h3 class="text-base font-bold text-white flex items-center gap-2" id="req-modal-title">
+        Treatment & Quality Requirements
+      </h3>
+      <button onclick="window.closeReqModal()" class="text-on-surface-variant hover:text-white">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    
+    <div class="space-y-3 text-xs">
+      <div>
+        <span class="text-on-surface-variant font-medium block mb-1">Required Treatment Method:</span>
+        <p class="text-white font-bold bg-white/5 p-2.5 rounded-xl border border-white/5" id="req-modal-treatment">--</p>
+      </div>
+      
+      <div>
+        <span class="text-on-surface-variant font-medium block mb-1">Quality Verification Parameters:</span>
+        <ul class="space-y-1.5" id="req-modal-params">
+          <!-- Param items inserted via JS -->
+        </ul>
+      </div>
+
+      <div class="p-3 bg-warning/10 border border-warning/20 rounded-xl text-warning text-[11px] leading-relaxed">
+        <strong>Safety Rule Notice:</strong> Water-quality verification required before reuse. Water is not automatically deemed safe without verified lab parameters.
+      </div>
+    </div>
+
+    <div class="flex justify-end pt-2">
+      <button onclick="window.closeReqModal()" class="bg-surface-variant hover:bg-surface-variant/80 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('app-sidebar').classList.remove('hidden');
+  document.getElementById('app-sidebar').classList.add('md:flex');
+  document.getElementById('app-header').classList.remove('hidden');
+  document.getElementById('app-bottom-nav').classList.remove('hidden');
+  document.getElementById('page-title').innerText = "AI Intelligence Center";
+
+  window.closeReqModal = function() {
+    document.getElementById('req-modal').classList.add('hidden');
+  };
+
+  window.showRequirementsModal = function(name, treatment, paramsJson) {
+    document.getElementById('req-modal-title').innerText = name + " Requirements";
+    document.getElementById('req-modal-treatment').innerText = treatment;
+    
+    const params = JSON.parse(decodeURIComponent(paramsJson));
+    const listEl = document.getElementById('req-modal-params');
+    listEl.innerHTML = params.map(p => `<li class="flex items-center gap-2 text-white"><span class="material-symbols-outlined text-success text-sm">check_circle</span> ${p}</li>`).join('');
+
+    document.getElementById('req-modal').classList.remove('hidden');
+  };
+
+  loadMLInsights();
+  loadRecommendations();
+
+  async function loadMLInsights() {
+    try {
+      const res = await fetch('http://localhost:8080/api/ml/predict/1');
+      if (res.ok) {
+        const data = await res.json();
+        const predFresh = Math.round(data.predicted_fresh_water || data.predictedFreshWater || 0);
+        const predReused = Math.round(data.predicted_reused_water || data.predictedReusedWater || 0);
+        const compliance = data.cto_compliance || data.ctoCompliance || "SAFE";
+        const conf = data.model_confidence || data.modelConfidence || "Active";
+
+        document.getElementById('ml-pred-fresh').innerText = predFresh > 0 ? `${predFresh.toLocaleString()} L` : "N/A";
+        document.getElementById('ml-pred-reused').innerText = predReused > 0 ? `${predReused.toLocaleString()} L` : "N/A";
+        document.getElementById('ml-pred-compliance').innerText = compliance;
+        document.getElementById('ml-pred-conf').innerText = `${conf} Conf`;
+
+        if (compliance === 'CRITICAL' || compliance === 'NON-COMPLIANT') {
+          document.getElementById('ml-pred-compliance').className = "text-sm font-bold text-error";
+          document.getElementById('health-score-val').innerText = "72";
+          document.getElementById('health-score-status').innerText = "REVIEW";
+          document.getElementById('health-score-status').className = "text-sm font-bold text-warning mt-1";
+        }
+      } else {
+        document.getElementById('ml-pred-fresh').innerText = "N/A";
+        document.getElementById('ml-pred-reused').innerText = "N/A";
+        document.getElementById('ml-pred-compliance').innerText = "Awaiting Data";
+        document.getElementById('ml-pred-conf').innerText = "Insufficient Data";
+      }
+    } catch (e) {
+      document.getElementById('ml-pred-fresh').innerText = "N/A";
+      document.getElementById('ml-pred-reused').innerText = "N/A";
+      document.getElementById('ml-pred-compliance').innerText = "Awaiting Entry";
+      document.getElementById('ml-pred-conf').innerText = "Awaiting Entry";
+    }
+  }
+
+  async function loadRecommendations() {
+    const grid = document.getElementById('recommendations-cards-grid');
+    let dto = null;
+
+    try {
+      const res = await fetch('http://localhost:8080/api/water/recommendations');
+      if (res.ok) {
+        dto = await res.json();
+      }
+    } catch (err) {
+      console.warn('Recommendations fetch error:', err);
+      dto = { hasData: false, emptyStateMessage: "No water usage records available. Add daily entries in Consumption to generate reuse recommendations." };
+    }
+
+    if (!dto || !dto.hasData) {
+      document.getElementById('rec-avail-water').innerHTML = '0 <span class="text-xs font-normal text-on-surface-variant">L</span>';
+      document.getElementById('rec-potential-saving').innerHTML = '0 <span class="text-xs font-normal text-on-surface-variant">L/day</span>';
+      document.getElementById('rec-top-reuse').innerText = 'None';
+      document.getElementById('rec-quality-status').innerText = 'Not Available';
+
+      grid.innerHTML = `
+        <div class="col-span-full glass-card rounded-2xl p-8 text-center text-on-surface-variant space-y-2">
+          <span class="material-symbols-outlined text-3xl text-on-surface-variant/50">water_drop</span>
+          <h4 class="text-base font-bold text-white">${dto && dto.emptyStateMessage ? dto.emptyStateMessage : "No water data available for recommendations."}</h4>
+          <p class="text-xs text-on-surface-variant">Add daily water usage data to generate reuse recommendations.</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Populate Overview
+    document.getElementById('rec-avail-water').innerHTML = `${(dto.availableReusableWater || 0).toLocaleString()} <span class="text-xs font-normal text-on-surface-variant">L</span>`;
+    document.getElementById('rec-potential-saving').innerHTML = `${(dto.totalPotentialFreshSaving || 0).toLocaleString()} <span class="text-xs font-normal text-on-surface-variant">L/day</span>`;
+    document.getElementById('rec-top-reuse').innerText = dto.topRecommendedReuse || 'Landscaping';
+    document.getElementById('rec-quality-status').innerText = dto.qualityVerificationStatus || 'Required';
+
+    // Build Recommendation Cards
+    grid.innerHTML = (dto.recommendations || []).map(r => {
+      let badgeClass = '';
+      if (r.status === 'RECOMMENDED') badgeClass = 'bg-success/10 text-success border-success/20';
+      else if (r.status === 'CONDITIONAL') badgeClass = 'bg-warning/10 text-warning border-warning/20';
+      else if (r.status === 'QUALITY VERIFICATION REQUIRED') badgeClass = 'bg-info/10 text-info border-info/20';
+      else badgeClass = 'bg-error/10 text-error border-error/20';
+
+      const paramsJson = encodeURIComponent(JSON.stringify(r.qualityRequirements || []));
+
+      return `
+        <div class="glass-card rounded-2xl p-5 border border-white/10 flex flex-col justify-between space-y-4 hover:border-white/20 transition-all">
+          <div class="space-y-2">
+            <div class="flex items-start justify-between gap-2">
+              <h4 class="text-sm font-bold text-white">${r.applicationName}</h4>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeClass} uppercase tracking-wider">${r.status}</span>
+            </div>
+            <p class="text-xs text-on-surface-variant leading-relaxed">${r.reason}</p>
+          </div>
+
+          <div class="space-y-2 pt-2 border-t border-white/5 text-xs">
+            <div class="flex justify-between items-center">
+              <span class="text-on-surface-variant">Potential Reuse:</span>
+              <span class="font-bold text-white font-mono-data">${(r.potentialReuseQuantity || 0).toLocaleString()} L/day</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-on-surface-variant">Potential Fresh Saving:</span>
+              <span class="font-bold text-success font-mono-data">${(r.potentialFreshSaving || 0).toLocaleString()} L/day</span>
+            </div>
+          </div>
+
+          <button onclick="window.showRequirementsModal('${r.applicationName}', '${r.requiredTreatment}', '${paramsJson}')" class="w-full bg-surface-variant/50 hover:bg-surface-variant text-white py-2 rounded-xl text-xs font-bold transition-all border border-white/5 flex items-center justify-center gap-1 cursor-pointer">
+            <span class="material-symbols-outlined text-sm">assignment_turned_in</span>
+            View Requirements
+          </button>
+        </div>
+      `;
+    }).join('');
+  }
+</script>

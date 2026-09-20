@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AquaNexus Water Intelligence</title>
+
+  <!-- Google Fonts: Inter & Geist -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Material Symbols Outlined -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet" />
+
+  <!-- Tailwind CSS (CDN for zero-build SPA) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            background: '#0c1322',
+            surface: '#1a2332',
+            'surface-variant': '#2e3545',
+            primary: '#10b981',
+            'primary-variant': '#059669',
+            secondary: '#3b82f6',
+            'secondary-variant': '#2563eb',
+            error: '#ef4444',
+            warning: '#f59e0b',
+            success: '#10b981',
+            info: '#3b82f6',
+            'on-background': '#dce2f7',
+            'on-surface': '#dce2f7',
+            'on-surface-variant': '#94a3b8',
+            'on-primary': '#ffffff'
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Geist', 'sans-serif'],
+            'mono-data': ['Geist', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body class="bg-background text-on-background font-sans antialiased selection:bg-primary/30">
+  
+  <!-- WebGL Ambient Background -->
+  <div id="shader-bg"></div>
+
+  <!-- Main App Layout -->
+  <div class="flex h-[100dvh] w-full relative z-10 overflow-hidden">
+    
+    <!-- Sidebar (Desktop) -->
+    <aside id="app-sidebar" class="hidden md:flex flex-col w-64 glass-panel border-r border-white/10 z-20 flex-shrink-0">
+      <div class="p-6 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20">
+          <span class="material-symbols-outlined text-white text-lg">water_drop</span>
+        </div>
+        <span class="font-display font-bold text-xl tracking-wide text-white">AquaNexus</span>
+      </div>
+      
+      <nav class="flex-1 px-4 py-6 flex flex-col gap-2 overflow-y-auto">
+        <a href="#/dashboard" data-route="/dashboard" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-white/5 transition-all">
+          <span class="material-symbols-outlined">dashboard</span>
+          <span class="font-medium">Command Center</span>
+        </a>
+        <a href="#/ai-assistant" data-route="/ai-assistant" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-white/5 transition-all">
+          <span class="material-symbols-outlined">smart_toy</span>
+          <span class="font-medium">AI Assistant</span>
+        </a>
+        <a href="#/cto" data-route="/cto" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-white/5 transition-all">
+          <span class="material-symbols-outlined">psychology</span>
+          <span class="font-medium">AI Insights</span>
+        </a>
+        <a href="#/consumption" data-route="/consumption" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-white/5 transition-all">
+          <span class="material-symbols-outlined">analytics</span>
+          <span class="font-medium">Consumption</span>
+        </a>
+        <a href="#/reports" data-route="/reports" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-white/5 transition-all">
+          <span class="material-symbols-outlined">picture_as_pdf</span>
+          <span class="font-medium">Reports</span>
+        </a>
+        <a href="#/alerts" data-route="/alerts" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-white/5 transition-all">
+          <span class="material-symbols-outlined">notifications_active</span>
+          <span class="font-medium">Alerts Center</span>
+        </a>
+        <a href="#/settings" data-route="/settings" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-white/5 transition-all">
+          <span class="material-symbols-outlined">settings</span>
+          <span class="font-medium">Settings</span>
+        </a>
+      </nav>
+
+      <div class="p-4 mb-4">
+        <div class="glass-card rounded-xl p-4 border border-primary/20 bg-primary/5">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="material-symbols-outlined text-primary">cloud_done</span>
+            <span class="text-sm font-bold text-primary">System Online</span>
+          </div>
+          <p class="text-xs text-on-surface-variant">Manual data monitoring & AI analytics active</p>
+        </div>
+      </div>
+      
+      <div class="p-4 border-t border-white/10 flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors">
+        <img id="sidebar-avatar" src="https://ui-avatars.com/api/?name=NA&background=2e3545&color=94a3b8&size=80" alt="Not Signed In" class="w-10 h-10 rounded-full border border-white/20 object-cover">
+        <div class="flex-1 min-w-0">
+          <div id="sidebar-name" class="text-sm font-bold text-white truncate">Not Signed In</div>
+          <div id="sidebar-role" class="text-xs text-on-surface-variant truncate">Please Sign In</div>
+        </div>
+        <a href="#" onclick="if(window.Auth) window.Auth.logout(); return false;" class="text-on-surface-variant hover:text-error transition-colors" title="Logout">
+          <span class="material-symbols-outlined">logout</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col min-w-0 relative h-full">
+      
+      <!-- Top App Bar (Mobile & Desktop) -->
+      <header id="app-header" class="h-16 glass-header border-b border-white/10 flex items-center justify-between px-4 lg:px-8 z-20 flex-shrink-0">
+        <div class="flex items-center gap-3 md:hidden">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+            <span class="material-symbols-outlined text-white text-sm">water_drop</span>
+          </div>
+          <span class="font-display font-bold text-lg text-white">AquaNexus</span>
+        </div>
+        
+        <div class="hidden md:flex items-center gap-2">
+          <h1 class="text-xl font-display font-bold text-white tracking-wide" id="page-title">Enterprise Overview</h1>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <div class="relative hidden sm:block">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+            <input type="text" placeholder="Search facilities..." class="bg-surface/50 border border-white/10 rounded-full pl-9 pr-4 py-1.5 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-white w-48 transition-all input-glass">
+          </div>
+          
+          <button onclick="window.location.hash='/alerts'" class="relative text-on-surface-variant hover:text-white transition-colors cursor-pointer p-1 rounded-lg" title="Open Alerts Center">
+            <span class="material-symbols-outlined">notifications</span>
+            <span id="top-notification-badge" class="absolute -top-1 -right-1 bg-error text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full min-w-[18px] text-center border border-background">0</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Page Inject Container -->
+      <main id="app" class="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-0 z-10 w-full">
+        <!-- Page fragments will be loaded here -->
+      </main>
+
+    </div>
+  </div>
+
+  <!-- Bottom Navigation (Mobile) -->
+  <nav id="app-bottom-nav" class="md:hidden fixed bottom-0 w-full glass-panel border-t border-white/10 z-30 pb-safe">
+    <div class="flex justify-around items-center h-16 px-2">
+      <a href="#/dashboard" data-route="/dashboard" class="bottom-nav-link flex flex-col items-center justify-center w-full h-full text-on-surface-variant/70">
+        <span class="material-symbols-outlined mb-1">dashboard</span>
+        <span class="text-[10px]">Home</span>
+      </a>
+      <a href="#/ai-assistant" data-route="/ai-assistant" class="bottom-nav-link flex flex-col items-center justify-center w-full h-full text-on-surface-variant/70">
+        <span class="material-symbols-outlined mb-1">smart_toy</span>
+        <span class="text-[10px]">Assistant</span>
+      </a>
+      <a href="#/cto" data-route="/cto" class="bottom-nav-link flex flex-col items-center justify-center w-full h-full text-on-surface-variant/70">
+        <span class="material-symbols-outlined mb-1">psychology</span>
+        <span class="text-[10px]">AI</span>
+      </a>
+      <a href="#/consumption" data-route="/consumption" class="bottom-nav-link flex flex-col items-center justify-center w-full h-full text-on-surface-variant/70">
+        <span class="material-symbols-outlined mb-1">analytics</span>
+        <span class="text-[10px]">Data</span>
+      </a>
+      <a href="#/reports" data-route="/reports" class="bottom-nav-link flex flex-col items-center justify-center w-full h-full text-on-surface-variant/70">
+        <span class="material-symbols-outlined mb-1">picture_as_pdf</span>
+        <span class="text-[10px]">Reports</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Scripts -->
+  <script src="js/shader.js"></script>
+  <script src="js/interactions.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/water-api.js"></script>
+  <script src="js/router.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      ShaderBG.init();
+      if (window.AppState) AppState.init();
+      Router.init();
+      // Restore session from JWT on page load / refresh
+      if (window.Auth) window.Auth.restoreSession();
+
+      // Sync active unread alerts badge
+      async function syncAlertBadge() {
+        try {
+          const res = await fetch('http://localhost:8080/api/alerts/summary');
+          if (res.ok) {
+            const data = await res.json();
+            const badge = document.getElementById('top-notification-badge');
+            if (badge) {
+              const count = data.totalOpen || 0;
+              badge.innerText = count;
+              if (count > 0) {
+                badge.classList.remove('hidden');
+              } else {
+                badge.classList.add('hidden');
+              }
+            }
+          }
+        } catch (e) {}
+      }
+
+      syncAlertBadge();
+      setInterval(syncAlertBadge, 15000);
+    });
+  </script>
+</body>
+</html>

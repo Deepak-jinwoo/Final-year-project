@@ -1,0 +1,253 @@
+<!-- AI Assistant Page Fragment -->
+<div class="p-4 lg:p-8 max-w-[1400px] mx-auto space-y-6 page-enter flex flex-col h-[calc(100vh-5rem)]">
+  
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 flex-shrink-0">
+    <div>
+      <h2 class="text-2xl font-display font-bold text-white flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-2xl">smart_toy</span>
+        AquaNexus Enterprise AI Assistant
+      </h2>
+      <p class="text-on-surface-variant text-sm mt-1">Domain-specific decision intelligence analyzing real facility data & ML outputs</p>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 bg-surface/50 border border-white/10 rounded-xl px-3.5 py-1.5 text-xs text-on-surface-variant">
+        <span class="w-2 h-2 rounded-full bg-success animate-pulse"></span>
+        <span class="text-white font-medium">Live DB Metrics Connected</span>
+      </div>
+      <button onclick="window.newConversation()" class="bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer">
+        <span class="material-symbols-outlined text-sm">add</span>
+        New Conversation
+      </button>
+      <button onclick="window.clearChatHistory()" class="bg-surface-variant/50 hover:bg-surface-variant text-white px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-colors border border-white/5 cursor-pointer">
+        <span class="material-symbols-outlined text-sm">delete_sweep</span>
+        Clear Chat
+      </button>
+    </div>
+  </div>
+
+  <!-- Quick Action Chips -->
+  <div class="flex items-center gap-2 overflow-x-auto pb-2 flex-shrink-0 scrollbar-none">
+    <button onclick="window.sendQuickPrompt('Analyze our current water usage and departments')" class="bg-surface-variant/40 hover:bg-primary/20 hover:border-primary/40 text-white text-xs px-3.5 py-2 rounded-xl border border-white/10 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer">
+      <span class="material-symbols-outlined text-sm text-primary">analytics</span>
+      Analyze Water Usage
+    </button>
+    <button onclick="window.sendQuickPrompt('Check current CTO compliance status and risk level')" class="bg-surface-variant/40 hover:bg-warning/20 hover:border-warning/40 text-white text-xs px-3.5 py-2 rounded-xl border border-white/10 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer">
+      <span class="material-symbols-outlined text-sm text-warning">shield</span>
+      Check CTO Compliance
+    </button>
+    <button onclick="window.sendQuickPrompt('Analyze recent leak anomalies and Isolation Forest results')" class="bg-surface-variant/40 hover:bg-error/20 hover:border-error/40 text-white text-xs px-3.5 py-2 rounded-xl border border-white/10 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer">
+      <span class="material-symbols-outlined text-sm text-error">warning</span>
+      Analyze Anomalies
+    </button>
+    <button onclick="window.sendQuickPrompt('Suggest practical water reuse options for our available treated water')" class="bg-surface-variant/40 hover:bg-success/20 hover:border-success/40 text-white text-xs px-3.5 py-2 rounded-xl border border-white/10 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer">
+      <span class="material-symbols-outlined text-sm text-success">recycling</span>
+      Suggest Water Reuse
+    </button>
+    <button onclick="window.sendQuickPrompt('Give me an executive summary of this month\'s water performance')" class="bg-surface-variant/40 hover:bg-secondary/20 hover:border-secondary/40 text-white text-xs px-3.5 py-2 rounded-xl border border-white/10 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer">
+      <span class="material-symbols-outlined text-sm text-secondary">summarize</span>
+      Summarize This Month
+    </button>
+    <button onclick="window.sendQuickPrompt('Explain the XGBoost next-day forecast and model confidence')" class="bg-surface-variant/40 hover:bg-info/20 hover:border-info/40 text-white text-xs px-3.5 py-2 rounded-xl border border-white/10 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer">
+      <span class="material-symbols-outlined text-sm text-info">insights</span>
+      Explain Forecast
+    </button>
+  </div>
+
+  <!-- Main Chat Window -->
+  <div class="glass-card rounded-2xl flex-1 flex flex-col overflow-hidden border border-white/10">
+    
+    <!-- Chat History Message List -->
+    <div id="chat-messages" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 scroll-smooth">
+      <!-- Injected via JS & restored from LocalStorage -->
+    </div>
+
+    <!-- Chat Input Area -->
+    <div class="p-4 border-t border-white/10 bg-white/5 flex-shrink-0">
+      <form onsubmit="window.handleChatSubmit(event)" class="flex items-center gap-3">
+        <div class="relative flex-1">
+          <input type="text" id="chat-input" placeholder="Ask about CTO compliance, water loss, leak anomalies, or reuse recommendations..." required class="w-full bg-surface-variant/50 border border-white/10 rounded-xl pl-4 pr-10 py-3 text-sm text-white focus:outline-none focus:border-primary transition-all placeholder:text-on-surface-variant/60">
+        </div>
+        <button type="submit" id="chat-submit-btn" class="bg-primary hover:bg-primary/90 text-on-primary font-bold px-5 py-3 rounded-xl text-sm flex items-center gap-2 shadow-lg shadow-primary/20 transition-all cursor-pointer">
+          <span>Send</span>
+          <span class="material-symbols-outlined text-base">send</span>
+        </button>
+      </form>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  document.getElementById('app-sidebar').classList.remove('hidden');
+  document.getElementById('app-sidebar').classList.add('md:flex');
+  document.getElementById('app-header').classList.remove('hidden');
+  document.getElementById('app-bottom-nav').classList.remove('hidden');
+  document.getElementById('page-title').innerText = "AI Assistant";
+
+  // Persistent storage key per user
+  const currentUserId = (JSON.parse(localStorage.getItem('aquanexus_user') || '{}')).username || 'default_user';
+  const CHAT_STORAGE_KEY = `aquanexus_chat_history_${currentUserId}`;
+
+  // Restore or initialize chat history
+  loadPersistentChatHistory();
+
+  function loadPersistentChatHistory() {
+    const container = document.getElementById('chat-messages');
+    const stored = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || '[]');
+
+    if (!Array.isArray(stored) || stored.length === 0) {
+      const welcomeMsg = {
+        sender: 'AI',
+        text: 'Hello! I am your domain-specific industrial water intelligence assistant. I analyze your actual database records, CTO limits, Isolation Forest leak signatures, and XGBoost forecasts.\n\nAsk any question or click a quick action above to begin.'
+      };
+      saveChatHistory([welcomeMsg]);
+      renderChatMessages([welcomeMsg]);
+    } else {
+      renderChatMessages(stored);
+    }
+  }
+
+  function renderChatMessages(msgList) {
+    const container = document.getElementById('chat-messages');
+    container.innerHTML = msgList.map(m => {
+      if (m.sender === 'USER') {
+        return `
+          <div class="flex items-start justify-end gap-3">
+            <div class="bg-primary/20 border border-primary/30 rounded-2xl rounded-tr-none p-4 max-w-2xl text-sm text-white leading-relaxed">
+              ${escapeHtml(m.text)}
+            </div>
+            <div class="w-8 h-8 rounded-xl bg-surface-variant flex items-center justify-center text-on-surface-variant flex-shrink-0 mt-0.5">
+              <span class="material-symbols-outlined text-base">person</span>
+            </div>
+          </div>`;
+      } else {
+        return `
+          <div class="flex items-start gap-3">
+            <div class="w-8 h-8 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
+              <span class="material-symbols-outlined text-base">smart_toy</span>
+            </div>
+            <div class="glass-card rounded-2xl rounded-tl-none p-4 max-w-2xl border border-white/10 text-sm text-white leading-relaxed space-y-2">
+              ${formatMarkdown(m.text)}
+            </div>
+          </div>`;
+      }
+    }).join('');
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function saveChatHistory(msgList) {
+    localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(msgList));
+  }
+
+  window.sendQuickPrompt = function(promptText) {
+    const input = document.getElementById('chat-input');
+    if (input) {
+      input.value = promptText;
+      window.handleChatSubmit(new Event('submit'));
+    }
+  };
+
+  window.newConversation = function() {
+    const welcomeMsg = {
+      sender: 'AI',
+      text: 'New conversation started. How can I assist you with your industrial water performance and CTO compliance today?'
+    };
+    saveChatHistory([welcomeMsg]);
+    renderChatMessages([welcomeMsg]);
+  };
+
+  window.clearChatHistory = function() {
+    window.newConversation();
+  };
+
+  window.handleChatSubmit = async function(e) {
+    if (e) e.preventDefault();
+    const input = document.getElementById('chat-input');
+    const btn = document.getElementById('chat-submit-btn');
+    const container = document.getElementById('chat-messages');
+
+    const prompt = input.value.trim();
+    if (!prompt) return;
+
+    // Load current history
+    const history = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || '[]');
+    history.push({ sender: 'USER', text: prompt });
+    saveChatHistory(history);
+    renderChatMessages(history);
+
+    input.value = '';
+
+    // Render Loading State
+    const loadingId = 'loading-' + Date.now();
+    const loadingHtml = `
+      <div id="${loadingId}" class="flex items-start gap-3">
+        <div class="w-8 h-8 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center text-primary flex-shrink-0 mt-0.5">
+          <span class="material-symbols-outlined text-base animate-spin">sync</span>
+        </div>
+        <div class="glass-card rounded-2xl rounded-tl-none p-4 border border-white/10 text-xs text-on-surface-variant flex items-center gap-2">
+          <span>Analyzing database metrics & running intelligence rules...</span>
+        </div>
+      </div>`;
+    container.insertAdjacentHTML('beforeend', loadingHtml);
+    container.scrollTop = container.scrollHeight;
+    btn.disabled = true;
+
+    let aiText = "";
+    try {
+      let resData = null;
+      if (window.WaterAPI && window.WaterAPI.sendAIChat) {
+        resData = await window.WaterAPI.sendAIChat(prompt);
+      } else {
+        const res = await fetch('http://localhost:8080/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        });
+        resData = await res.json();
+      }
+
+      aiText = resData && resData.message ? resData.message : "Failed to process request.";
+    } catch (err) {
+      // Offline / Local Storage AI Fallback
+      const local = JSON.parse(localStorage.getItem('aquanexus_local_records') || '[]');
+      if (local.length > 0) {
+        const totalF = local.reduce((a, r) => a + (r.freshWaterConsumed || 0), 0);
+        const totalR = local.reduce((a, r) => a + (r.reusedWater || 0), 0);
+        const avgCto = local.reduce((a, r) => a + (r.ctoUtilization || 0), 0) / local.length;
+        aiText = `### 💧 AquaNexus Intelligence Assistant\n\nAnalyzed **${local.length} local record(s)**:\n\n- **Total Consumed:** ${totalF.toLocaleString()} L\n- **Total Reused:** ${totalR.toLocaleString()} L\n- **Average CTO Utilization:** ${avgCto.toFixed(1)}%\n- **Status:** ${avgCto > 95 ? "CRITICAL" : (avgCto >= 80 ? "WARNING" : "SAFE")}`;
+      } else {
+        aiText = `### 💧 AquaNexus AI Assistant Notice\n\nNo consumption records are currently available. Please navigate to **[Consumption Records](#/consumption)** and submit daily data to activate AI analysis.`;
+      }
+    }
+
+    // Save AI response to persistent storage
+    const updatedHistory = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || '[]');
+    updatedHistory.push({ sender: 'AI', text: aiText });
+    saveChatHistory(updatedHistory);
+
+    const loadEl = document.getElementById(loadingId);
+    if (loadEl) loadEl.remove();
+
+    renderChatMessages(updatedHistory);
+    btn.disabled = false;
+  };
+
+  function escapeHtml(text) {
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function formatMarkdown(txt) {
+    if (!txt) return "";
+    let html = txt
+      .replace(/### (.*?)\n/g, '<h3 class="text-base font-bold text-white mb-1 mt-2">$1</h3>')
+      .replace(/## (.*?)\n/g, '<h2 class="text-lg font-bold text-white mb-2">$1</h2>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-white">$1</strong>')
+      .replace(/`(.*?)`/g, '<code class="bg-white/10 px-1.5 py-0.5 rounded font-mono text-xs text-primary">$1</code>')
+      .replace(/- (.*?)\n/g, '<li class="ml-4 list-disc text-xs text-on-surface-variant">$1</li>')
+      .replace(/\n\n/g, '<br/>');
+    return html;
+  }
+</script>

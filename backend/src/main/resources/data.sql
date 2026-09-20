@@ -1,0 +1,4 @@
+-- =========================================================
+-- AquaNexus — SQL Data Initialization
+-- Database starts clean. User inputs records via UI form.
+-- =========================================================

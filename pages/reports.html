@@ -1,0 +1,679 @@
+<!-- Reports Management & Dedicated Document Viewer Page Fragment -->
+<div class="p-4 lg:p-8 max-w-[1600px] mx-auto space-y-6 page-enter">
+  
+  <!-- Header & Actions -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+    <div>
+      <h2 class="text-2xl font-display font-bold text-white flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-2xl">picture_as_pdf</span>
+        Industrial Water Usage Reports & History
+      </h2>
+      <p class="text-on-surface-variant text-sm mt-1">Dedicated corporate Daily & Monthly OpenPDF reports with zero webpage print formatting</p>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <button onclick="window.openReportGenModal()" class="bg-primary hover:bg-primary/90 text-on-primary font-bold px-4 py-2.5 rounded-xl text-sm flex items-center gap-2 shadow-lg shadow-primary/20 transition-all cursor-pointer">
+        <span class="material-symbols-outlined text-base">add_chart</span>
+        Generate Monthly Report
+      </button>
+    </div>
+  </div>
+
+  <!-- Report Type Tabs & Filters -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/10 pb-4">
+    <div class="flex items-center gap-3">
+      <button id="tab-btn-daily" onclick="window.switchReportTab('DAILY')" class="px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 bg-primary/20 text-primary border border-primary/30 cursor-pointer">
+        <span class="material-symbols-outlined text-base">today</span>
+        DAILY REPORTS
+      </button>
+      <button id="tab-btn-monthly" onclick="window.switchReportTab('MONTHLY')" class="px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 text-on-surface-variant hover:text-white hover:bg-white/5 cursor-pointer">
+        <span class="material-symbols-outlined text-base">calendar_month</span>
+        MONTHLY REPORTS
+      </button>
+    </div>
+
+    <!-- Filters Bar -->
+    <div class="flex items-center gap-2 text-xs flex-wrap">
+      <div>
+        <input type="date" id="filter-date" onchange="window.applyReportsFilters()" class="bg-surface-variant/50 border border-white/10 rounded-xl px-3 py-1.5 text-white focus:outline-none focus:border-primary">
+      </div>
+      <div>
+        <select id="filter-department" onchange="window.applyReportsFilters()" class="bg-surface-variant/50 border border-white/10 rounded-xl px-3 py-1.5 text-white focus:outline-none focus:border-primary">
+          <option value="">All Departments</option>
+          <option value="Production">Production</option>
+          <option value="Cooling">Cooling</option>
+          <option value="Cleaning">Cleaning</option>
+          <option value="Utilities">Utilities</option>
+        </select>
+      </div>
+      <button onclick="window.clearReportsFilters()" class="bg-surface-variant/50 hover:bg-surface-variant text-white px-3 py-1.5 rounded-xl flex items-center gap-1 transition-colors border border-white/5 cursor-pointer">
+        <span class="material-symbols-outlined text-xs">restart_alt</span>
+        Reset Filters
+      </button>
+    </div>
+  </div>
+
+  <!-- SECTION A: DAILY REPORTS TABLE -->
+  <div id="section-daily-reports" class="glass-card rounded-2xl overflow-hidden flex flex-col border border-white/10">
+    <div class="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
+      <h3 class="text-base font-bold text-white flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-sm">today</span>
+        Daily Industrial Water Usage Reports
+      </h3>
+      <span class="text-xs text-on-surface-variant" id="daily-count-label">0 daily log(s)</span>
+    </div>
+
+    <div class="overflow-x-auto w-full">
+      <table class="w-full text-left border-collapse min-w-[950px]">
+        <thead>
+          <tr class="bg-surface/50 border-b border-white/10 text-xs uppercase tracking-wider text-on-surface-variant font-medium">
+            <th class="px-5 py-4">Report Date & Dept</th>
+            <th class="px-5 py-4">Company & Facility</th>
+            <th class="px-5 py-4">Fresh Water (L)</th>
+            <th class="px-5 py-4">Reused Water (L)</th>
+            <th class="px-5 py-4">CTO Utilization %</th>
+            <th class="px-5 py-4">Status</th>
+            <th class="px-5 py-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="daily-reports-tbody" class="text-sm divide-y divide-white/5 bg-transparent">
+          <tr>
+            <td colspan="7" class="px-6 py-12 text-center text-on-surface-variant">
+              Loading daily reports...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECTION B: MONTHLY REPORTS TABLE (HIDDEN BY DEFAULT) -->
+  <div id="section-monthly-reports" class="glass-card rounded-2xl overflow-hidden flex flex-col border border-white/10 hidden">
+    <div class="p-4 border-b border-white/10 flex justify-between items-center bg-white/5">
+      <h3 class="text-base font-bold text-white flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-sm">calendar_month</span>
+        Monthly Environmental & CTO Compliance Reports
+      </h3>
+      <span class="text-xs text-on-surface-variant" id="monthly-count-label">0 monthly report(s) archived</span>
+    </div>
+
+    <div class="overflow-x-auto w-full">
+      <table class="w-full text-left border-collapse min-w-[950px]">
+        <thead>
+          <tr class="bg-surface/50 border-b border-white/10 text-xs uppercase tracking-wider text-on-surface-variant font-medium">
+            <th class="px-5 py-4">Reporting Period</th>
+            <th class="px-5 py-4">Facility Details</th>
+            <th class="px-5 py-4">Logs Analyzed</th>
+            <th class="px-5 py-4">Total Fresh (L)</th>
+            <th class="px-5 py-4">Total Reused (L)</th>
+            <th class="px-5 py-4">Avg CTO Util %</th>
+            <th class="px-5 py-4">Generated Date</th>
+            <th class="px-5 py-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="monthly-reports-tbody" class="text-sm divide-y divide-white/5 bg-transparent">
+          <tr>
+            <td colspan="8" class="px-6 py-12 text-center text-on-surface-variant">
+              Loading monthly reports...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- GENERATE REPORT MODAL -->
+<div id="gen-report-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md hidden">
+  <div class="glass-card rounded-2xl border border-white/10 w-full max-w-md p-6 shadow-2xl space-y-5">
+    <div class="flex justify-between items-center border-b border-white/10 pb-3">
+      <h3 class="text-base font-bold text-white flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary">add_chart</span>
+        Generate Monthly PDF Report
+      </h3>
+      <button onclick="window.closeReportGenModal()" class="text-on-surface-variant hover:text-white">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <form onsubmit="window.handleGenerateReportSubmit(event)" class="space-y-4 text-xs">
+      <div>
+        <label class="block text-on-surface-variant mb-1 font-medium">Select Reporting Period</label>
+        <select id="gen-preset" onchange="window.handlePresetChange()" class="w-full bg-surface-variant/50 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-primary">
+          <option value="CURRENT_MONTH">Current Month (August 2026)</option>
+          <option value="LAST_MONTH">Previous Month (July 2026)</option>
+          <option value="CUSTOM">Custom Date Range</option>
+        </select>
+      </div>
+
+      <div id="custom-date-fields" class="grid grid-cols-2 gap-3 hidden">
+        <div>
+          <label class="block text-on-surface-variant mb-1 font-medium">Start Date</label>
+          <input type="date" id="gen-start-date" class="w-full bg-surface-variant/50 border border-white/10 rounded-xl px-3 py-2 text-white">
+        </div>
+        <div>
+          <label class="block text-on-surface-variant mb-1 font-medium">End Date</label>
+          <input type="date" id="gen-end-date" class="w-full bg-surface-variant/50 border border-white/10 rounded-xl px-3 py-2 text-white">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-on-surface-variant mb-1 font-medium">Report Label (Optional)</label>
+        <input type="text" id="gen-period-name" placeholder="e.g. August 2026 Executive Audit" class="w-full bg-surface-variant/50 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white">
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <button type="button" onclick="window.closeReportGenModal()" class="px-4 py-2 rounded-xl font-medium text-on-surface-variant hover:text-white">
+          Cancel
+        </button>
+        <button type="submit" id="btn-gen-report" class="bg-primary hover:bg-primary/90 text-on-primary font-bold px-5 py-2 rounded-xl shadow-md shadow-primary/20 flex items-center gap-1.5 cursor-pointer">
+          <span class="material-symbols-outlined text-sm">picture_as_pdf</span>
+          Compile PDF Report
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- DEDICATED REPORT DOCUMENT VIEWER MODAL -->
+<div id="doc-viewer-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-md hidden">
+  <div class="glass-card rounded-2xl border border-white/10 w-full max-w-4xl p-6 shadow-2xl space-y-4 max-h-[92vh] flex flex-col">
+    
+    <!-- Viewer Header -->
+    <div class="flex justify-between items-center border-b border-white/10 pb-3 flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center text-primary">
+          <span class="material-symbols-outlined">description</span>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white" id="doc-viewer-title">
+            Industrial Water Usage Report
+          </h3>
+          <p class="text-xs text-on-surface-variant" id="doc-viewer-subtitle">Dedicated Document Viewer — AquaNexus Water Intelligence</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <a id="doc-viewer-pdf-btn" href="#" target="_blank" class="bg-primary hover:bg-primary/90 text-on-primary font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 text-xs shadow-md shadow-primary/20 transition-all">
+          <span class="material-symbols-outlined text-sm">download</span>
+          Download PDF
+        </a>
+        <button onclick="window.closeDocViewerModal()" class="text-on-surface-variant hover:text-white p-1 rounded-lg">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Document Paper Body -->
+    <div id="doc-paper-content" class="flex-1 overflow-y-auto bg-white text-slate-900 rounded-xl p-8 shadow-inner space-y-6 text-xs font-sans border border-slate-200">
+      <!-- Injected Document HTML -->
+    </div>
+
+    <!-- Viewer Footer -->
+    <div class="flex justify-between items-center pt-2 flex-shrink-0 text-xs text-on-surface-variant border-t border-white/10">
+      <span>AquaNexus OpenPDF Document Service</span>
+      <button onclick="window.closeDocViewerModal()" class="px-4 py-1.5 rounded-xl font-medium text-white bg-surface-variant hover:bg-surface-variant/80 transition-colors">
+        Close Viewer
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('app-sidebar').classList.remove('hidden');
+  document.getElementById('app-sidebar').classList.add('md:flex');
+  document.getElementById('app-header').classList.remove('hidden');
+  document.getElementById('app-bottom-nav').classList.remove('hidden');
+  document.getElementById('page-title').innerText = "Reports Archive";
+
+  window.activeReportTab = 'DAILY';
+
+  window.switchReportTab = function(tab) {
+    window.activeReportTab = tab;
+    const btnDaily = document.getElementById('tab-btn-daily');
+    const btnMonthly = document.getElementById('tab-btn-monthly');
+    const secDaily = document.getElementById('section-daily-reports');
+    const secMonthly = document.getElementById('section-monthly-reports');
+
+    if (tab === 'DAILY') {
+      btnDaily.className = 'px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 bg-primary/20 text-primary border border-primary/30 cursor-pointer';
+      btnMonthly.className = 'px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 text-on-surface-variant hover:text-white hover:bg-white/5 cursor-pointer';
+      secDaily.classList.remove('hidden');
+      secMonthly.classList.add('hidden');
+    } else {
+      btnMonthly.className = 'px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 bg-primary/20 text-primary border border-primary/30 cursor-pointer';
+      btnDaily.className = 'px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 text-on-surface-variant hover:text-white hover:bg-white/5 cursor-pointer';
+      secMonthly.classList.remove('hidden');
+      secDaily.classList.add('hidden');
+    }
+  };
+
+  window.openReportGenModal = function() { document.getElementById('gen-report-modal').classList.remove('hidden'); };
+  window.closeReportGenModal = function() { document.getElementById('gen-report-modal').classList.add('hidden'); };
+  window.closeDocViewerModal = function() { document.getElementById('doc-viewer-modal').classList.add('hidden'); };
+
+  window.handlePresetChange = function() {
+    const preset = document.getElementById('gen-preset').value;
+    document.getElementById('custom-date-fields').classList.toggle('hidden', preset !== 'CUSTOM');
+  };
+
+  // ===== STORED DATA FOR CLIENT-SIDE FILTERING =====
+  window._allDailyRecords = [];
+  window._allMonthlyReports = [];
+
+  // ===== FILTER FUNCTIONS =====
+  window.applyReportsFilters = function() {
+    renderDailyTable(getFilteredDaily());
+    renderMonthlyTable(getFilteredMonthly());
+  };
+
+  window.clearReportsFilters = function() {
+    document.getElementById('filter-date').value = '';
+    document.getElementById('filter-department').value = '';
+    renderDailyTable(window._allDailyRecords);
+    renderMonthlyTable(window._allMonthlyReports);
+  };
+
+  function getFilteredDaily() {
+    const dateVal = document.getElementById('filter-date').value; // "YYYY-MM-DD"
+    const deptVal = document.getElementById('filter-department').value;
+    let filtered = [...window._allDailyRecords];
+    if (dateVal) {
+      filtered = filtered.filter(r => r.date === dateVal);
+    }
+    if (deptVal) {
+      filtered = filtered.filter(r => (r.department || '').toLowerCase() === deptVal.toLowerCase());
+    }
+    return filtered;
+  }
+
+  function getFilteredMonthly() {
+    const dateVal = document.getElementById('filter-date').value;
+    let filtered = [...window._allMonthlyReports];
+    if (dateVal) {
+      // For monthly reports, match by year-month from the filter date
+      const ym = dateVal.substring(0, 7); // "YYYY-MM"
+      filtered = filtered.filter(r => {
+        const period = (r.periodName || '').toLowerCase();
+        const genAt = (r.generatedAt || '');
+        return genAt.startsWith(ym) || period.includes(ym);
+      });
+    }
+    return filtered;
+  }
+
+  loadReportsData();
+
+  async function loadReportsData() {
+    await loadDailyReports();
+    await loadMonthlyReports();
+  }
+
+  // ===== 1. LOAD DAILY REPORTS =====
+  async function loadDailyReports() {
+    let records = [];
+
+    try {
+      if (window.WaterAPI && window.WaterAPI.getRecords) {
+        records = await window.WaterAPI.getRecords();
+      } else {
+        const res = await fetch('http://localhost:8080/api/water/records');
+        records = await res.json();
+      }
+    } catch (err) {
+      records = JSON.parse(localStorage.getItem('aquanexus_local_records') || '[]');
+    }
+
+    window._allDailyRecords = Array.isArray(records) ? records : [];
+    renderDailyTable(window._allDailyRecords);
+  }
+
+  function renderDailyTable(records) {
+    const tbody = document.getElementById('daily-reports-tbody');
+
+    if (!Array.isArray(records) || records.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7" class="px-6 py-12 text-center text-on-surface-variant">
+            <div class="font-bold text-base text-white mb-1">No daily water usage logs available.</div>
+            <p class="text-xs">Submit a daily log in Consumption Records to auto-generate daily reports.</p>
+          </td>
+        </tr>`;
+      document.getElementById('daily-count-label').innerText = "0 daily log(s)";
+      return;
+    }
+
+    document.getElementById('daily-count-label').innerText = records.length + " daily report(s)";
+
+    tbody.innerHTML = records.map(r => {
+      const pdfUrl = window.WaterAPI ? window.WaterAPI.getDailyReportPdfUrl(r.id) : `http://localhost:8080/api/water/reports/daily/${r.id}/pdf`;
+      const dateStr = r.date || 'Today';
+      const ctoUtil = r.ctoUtilization != null ? r.ctoUtilization.toFixed(1) : '0.0';
+      const st = r.complianceStatus || 'SAFE';
+
+      let stBadge = '';
+      if (st === 'CRITICAL') stBadge = '<span class="px-2 py-0.5 rounded bg-error/10 text-error font-bold border border-error/20">CRITICAL</span>';
+      else if (st === 'WARNING') stBadge = '<span class="px-2 py-0.5 rounded bg-warning/10 text-warning font-bold border border-warning/20">WARNING</span>';
+      else stBadge = '<span class="px-2 py-0.5 rounded bg-success/10 text-success font-bold border border-success/20">SAFE</span>';
+
+      return `
+        <tr class="hover:bg-white/5 transition-colors">
+          <td class="px-5 py-3.5">
+            <div class="font-bold text-white">${dateStr}</div>
+            <div class="text-xs text-on-surface-variant">${r.department || 'Production'}</div>
+          </td>
+          <td class="px-5 py-3.5 text-xs">
+            <div class="font-medium text-white">${r.industryName || 'North Assembly Plant'}</div>
+            <div class="text-on-surface-variant font-mono-data">${r.cttoNumber || 'CTO-2026-IND-884'}</div>
+          </td>
+          <td class="px-5 py-3.5 font-mono-data text-white">${(r.freshWaterConsumed || 0).toLocaleString()} L</td>
+          <td class="px-5 py-3.5 font-mono-data text-success">${(r.reusedWater || 0).toLocaleString()} L</td>
+          <td class="px-5 py-3.5 font-bold text-white">${ctoUtil}%</td>
+          <td class="px-5 py-3.5 text-xs">${stBadge}</td>
+          <td class="px-5 py-3.5 text-right">
+            <div class="flex items-center justify-end gap-2">
+              <button onclick="window.viewDailyReportDoc(${r.id})" class="bg-surface-variant/50 hover:bg-surface-variant text-white px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors border border-white/5 cursor-pointer">
+                <span class="material-symbols-outlined text-xs">visibility</span>
+                View Report
+              </button>
+              <a href="${pdfUrl}" target="_blank" class="bg-primary hover:bg-primary/90 text-on-primary px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-md shadow-primary/20 transition-all">
+                <span class="material-symbols-outlined text-xs">download</span>
+                PDF
+              </a>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  // ===== 2. LOAD MONTHLY REPORTS =====
+  async function loadMonthlyReports() {
+    let reports = [];
+
+    try {
+      if (window.WaterAPI && window.WaterAPI.getReportHistory) {
+        reports = await window.WaterAPI.getReportHistory();
+      } else {
+        const res = await fetch('http://localhost:8080/api/water/reports/history');
+        reports = await res.json();
+      }
+    } catch (err) {
+      reports = JSON.parse(localStorage.getItem('aquanexus_local_reports') || '[]');
+    }
+
+    window._allMonthlyReports = Array.isArray(reports) ? reports : [];
+    renderMonthlyTable(window._allMonthlyReports);
+  }
+
+  function renderMonthlyTable(reports) {
+    const tbody = document.getElementById('monthly-reports-tbody');
+
+    if (!Array.isArray(reports) || reports.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="8" class="px-6 py-12 text-center text-on-surface-variant">
+            <div class="font-bold text-base text-white mb-1">No monthly reports archived.</div>
+            <p class="text-xs">Click "Generate Monthly Report" above to compile an end-of-month corporate PDF.</p>
+          </td>
+        </tr>`;
+      document.getElementById('monthly-count-label').innerText = "0 monthly report(s) archived";
+      return;
+    }
+
+    document.getElementById('monthly-count-label').innerText = reports.length + " monthly report(s) archived";
+
+    tbody.innerHTML = reports.map(r => {
+      const pdfUrl = window.WaterAPI ? window.WaterAPI.getReportPdfUrl(r.id) : `http://localhost:8080/api/water/reports/${r.id}/pdf`;
+      const dateStr = r.generatedAt ? new Date(r.generatedAt).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : 'Today';
+
+      return `
+        <tr class="hover:bg-white/5 transition-colors">
+          <td class="px-5 py-3.5">
+            <div class="font-bold text-white flex items-center gap-1.5">
+              <span class="material-symbols-outlined text-primary text-sm">picture_as_pdf</span>
+              ${r.periodName || 'August 2026'}
+            </div>
+            <div class="text-xs text-on-surface-variant">${r.reportTitle || 'Monthly Environmental Compliance'}</div>
+          </td>
+          <td class="px-5 py-3.5 text-xs">
+            <div class="font-medium text-white">${r.industryName || 'North Assembly Plant'}</div>
+            <div class="text-on-surface-variant font-mono-data">${r.cttoNumber || 'CTO-2026-IND-884'}</div>
+          </td>
+          <td class="px-5 py-3.5 font-mono-data text-white">${r.totalRecordsCount || 0}</td>
+          <td class="px-5 py-3.5 font-mono-data text-white">${(r.totalFreshWater || 0).toLocaleString()} L</td>
+          <td class="px-5 py-3.5 font-mono-data text-success">${(r.totalReusedWater || 0).toLocaleString()} L</td>
+          <td class="px-5 py-3.5 font-bold text-white">${(r.avgCtoUtilization || 0).toFixed(1)}%</td>
+          <td class="px-5 py-3.5 text-xs text-on-surface-variant">${dateStr}</td>
+          <td class="px-5 py-3.5 text-right">
+            <div class="flex items-center justify-end gap-2">
+              <button onclick="window.viewMonthlyReportDoc(${r.id})" class="bg-surface-variant/50 hover:bg-surface-variant text-white px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors border border-white/5 cursor-pointer">
+                <span class="material-symbols-outlined text-xs">visibility</span>
+                View Report
+              </button>
+              <a href="${pdfUrl}" target="_blank" class="bg-primary hover:bg-primary/90 text-on-primary px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-md shadow-primary/20 transition-all">
+                <span class="material-symbols-outlined text-xs">download</span>
+                PDF
+              </a>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  // ===== VIEW DAILY REPORT DOCUMENT IN VIEWER =====
+  window.viewDailyReportDoc = async function(recordId) {
+    try {
+      let d = null;
+      if (window.WaterAPI && window.WaterAPI.getDailyReportPreview) {
+        d = await window.WaterAPI.getDailyReportPreview(recordId);
+      } else {
+        const res = await fetch(`http://localhost:8080/api/water/reports/daily/${recordId}/preview`);
+        d = await res.json();
+      }
+
+      document.getElementById('doc-viewer-title').innerText = "INDUSTRIAL WATER USAGE REPORT — DAILY";
+      document.getElementById('doc-viewer-subtitle').innerText = (d.companyName || "North Assembly Plant") + " | " + d.date;
+      document.getElementById('doc-viewer-pdf-btn').href = window.WaterAPI ? window.WaterAPI.getDailyReportPdfUrl(recordId) : `http://localhost:8080/api/water/reports/daily/${recordId}/pdf`;
+
+      const fresh = d.freshWaterConsumed || 0;
+      const waste = d.wastewaterGenerated || 0;
+      const reused = d.reusedWater || 0;
+      const loss = d.waterLoss || Math.max(0, waste - reused);
+      const limit = d.ctoLimit || 2000;
+      const remaining = Math.max(0, limit - fresh);
+      const ctoUtil = (d.ctoUtilization || (limit > 0 ? (fresh/limit)*100 : 0)).toFixed(1);
+      const reusePct = (d.reusePercentage || (fresh > 0 ? (reused/fresh)*100 : 0)).toFixed(1);
+      const status = d.complianceStatus || (ctoUtil > 95 ? "CRITICAL" : (ctoUtil >= 80 ? "WARNING" : "SAFE"));
+
+      const landscapeQty = (reused * 0.30).toFixed(1);
+      const toiletQty = (reused * 0.35).toFixed(1);
+      const cleaningQty = (reused * 0.20).toFixed(1);
+
+      const paper = document.getElementById('doc-paper-content');
+      paper.innerHTML = `
+        <div class="border-b border-slate-300 pb-4 flex justify-between items-start">
+          <div>
+            <h1 class="text-xl font-bold text-slate-900 tracking-tight">AquaNexus Water Intelligence</h1>
+            <p class="text-sm font-semibold text-emerald-600 uppercase tracking-wide mt-0.5">INDUSTRIAL WATER USAGE REPORT — DAILY</p>
+          </div>
+          <div class="text-right text-[11px] text-slate-500">
+            <p><strong>Report Date:</strong> ${d.date}</p>
+            <p><strong>Department:</strong> ${d.department}</p>
+          </div>
+        </div>
+
+        <!-- COMPANY DETAILS BLOCK -->
+        <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-200 text-[11px]">
+          <div><p><strong>Company Name:</strong> ${d.companyName}</p><p><strong>Facility Location:</strong> ${d.facilityLocation || 'Industrial Sector 4'}</p><p><strong>Type of Industry:</strong> ${d.industryType || 'Manufacturing'}</p></div>
+          <div><p><strong>CTO Registration No:</strong> ${d.ctoNumber}</p><p><strong>Plant ID / Permit No:</strong> ${d.plantId || 'PLANT-IND-01'}</p><p><strong>Responsible Officer:</strong> ${d.responsibleOfficer || 'Compliance Officer'}</p></div>
+        </div>
+
+        <!-- 1. WATER USAGE SUMMARY -->
+        <div class="space-y-2">
+          <h2 class="text-sm font-bold text-slate-900 border-b border-slate-200 pb-1">1. WATER USAGE SUMMARY</h2>
+          <div class="grid grid-cols-5 gap-2 text-center text-slate-800">
+            <div class="bg-slate-100 p-2.5 rounded border"><p class="text-[10px] text-slate-500">Fresh Consumed</p><p class="text-sm font-bold">${fresh.toLocaleString()} L</p></div>
+            <div class="bg-slate-100 p-2.5 rounded border"><p class="text-[10px] text-slate-500">Wastewater Gen.</p><p class="text-sm font-bold">${waste.toLocaleString()} L</p></div>
+            <div class="bg-emerald-50 p-2.5 rounded border border-emerald-200"><p class="text-[10px] text-emerald-700">Reused Water</p><p class="text-sm font-bold text-emerald-700">${reused.toLocaleString()} L</p></div>
+            <div class="bg-slate-100 p-2.5 rounded border"><p class="text-[10px] text-slate-500">Water Loss</p><p class="text-sm font-bold text-amber-600">${loss.toLocaleString()} L</p></div>
+            <div class="bg-emerald-50 p-2.5 rounded border border-emerald-200"><p class="text-[10px] text-emerald-700">Reuse Percentage</p><p class="text-sm font-bold text-emerald-700">${reusePct}%</p></div>
+          </div>
+        </div>
+
+        <!-- 2. CTO COMPLIANCE -->
+        <div class="space-y-2">
+          <h2 class="text-sm font-bold text-slate-900 border-b border-slate-200 pb-1">2. CTO COMPLIANCE ANALYSIS</h2>
+          <div class="grid grid-cols-4 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200 text-center">
+            <div><p class="text-[10px] text-slate-500">CTO Daily Limit</p><p class="text-sm font-bold text-slate-900">${limit.toLocaleString()} L</p></div>
+            <div><p class="text-[10px] text-slate-500">Actual Fresh Usage</p><p class="text-sm font-bold text-slate-900">${fresh.toLocaleString()} L</p></div>
+            <div><p class="text-[10px] text-slate-500">Remaining Capacity</p><p class="text-sm font-bold text-emerald-600">${remaining.toLocaleString()} L</p></div>
+            <div><p class="text-[10px] text-slate-500">Compliance Status</p><p class="text-sm font-bold ${status === 'CRITICAL' ? 'text-red-600' : (status === 'WARNING' ? 'text-amber-600' : 'text-emerald-600')}">${status} (${ctoUtil}%)</p></div>
+          </div>
+          ${fresh > limit ? `<p class="text-xs font-bold text-red-600 bg-red-50 p-2 rounded border border-red-200">CRITICAL: CTO limit exceeded by ${(fresh - limit).toLocaleString()} Liters!</p>` : ''}
+        </div>
+
+        <!-- 3. WATER REUSE RECOMMENDATIONS (DAILY EXCLUSIVE) -->
+        <div class="space-y-2">
+          <h2 class="text-sm font-bold text-slate-900 border-b border-slate-200 pb-1">3. WATER REUSE RECOMMENDATIONS</h2>
+          <p class="text-slate-600">Available Reusable Water: <strong>${reused.toLocaleString()} L/day</strong>. Potential non-potable allocations subject to lab quality verification:</p>
+          <table class="w-full text-left border-collapse border border-slate-200 text-[11px]">
+            <thead>
+              <tr class="bg-slate-100 font-bold border-b border-slate-200"><th class="p-2">Recommended Use</th><th class="p-2">Potential Qty</th><th class="p-2">Fresh Saving</th><th class="p-2">Required Treatment / Quality Verification</th></tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr><td class="p-2 font-bold">Gardening / Landscaping</td><td class="p-2">${landscapeQty} L/day</td><td class="p-2 font-bold text-emerald-600">${landscapeQty} L/day</td><td class="p-2 text-slate-600">Secondary Filtration & UV (Verification Required)</td></tr>
+              <tr><td class="p-2 font-bold">Toilet Flushing</td><td class="p-2">${toiletQty} L/day</td><td class="p-2 font-bold text-emerald-600">${toiletQty} L/day</td><td class="p-2 text-slate-600">Dual-stage Filtration & Chlorination (Verification Required)</td></tr>
+              <tr><td class="p-2 font-bold">Floor / Equipment Cleaning</td><td class="p-2">${cleaningQty} L/day</td><td class="p-2 font-bold text-emerald-600">${cleaningQty} L/day</td><td class="p-2 text-slate-600">Sand Filtration & Oil/Grease Check (Verification Required)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 4. ANOMALY INFORMATION -->
+        <div class="space-y-1">
+          <h2 class="text-sm font-bold text-slate-900 border-b border-slate-200 pb-1">4. ISOLATION FOREST ANOMALY CHECK</h2>
+          <p class="text-slate-700">${d.isAnomaly ? '<strong class="text-red-600">ANOMALY DETECTED:</strong> Isolation Forest flagged abnormal consumption ratio in ' + d.department + '. Recommend inspection of supply headers.' : 'No abnormal water usage detected. Baseline water loss remains within operational limits.'}</p>
+        </div>
+
+        <!-- 5. AI INSIGHT -->
+        <div class="space-y-1 bg-slate-50 p-3 rounded border border-slate-200">
+          <h2 class="text-xs font-bold text-slate-900">5. DAILY AI PERFORMANCE INSIGHT</h2>
+          <p class="text-slate-600">Fresh water consumption registered at ${ctoUtil}% of the permitted CTO daily limit (${limit.toLocaleString()} L limit). ${reused.toLocaleString()} L was recorded as reused, achieving a ${reusePct}% recycling yield.</p>
+        </div>`;
+
+      document.getElementById('doc-viewer-modal').classList.remove('hidden');
+    } catch (e) {
+      alert("Could not load daily report document.");
+    }
+  };
+
+  // ===== VIEW MONTHLY REPORT DOCUMENT IN VIEWER (NO DAILY REUSE RECS) =====
+  window.viewMonthlyReportDoc = async function(id) {
+    try {
+      const res = await fetch(`http://localhost:8080/api/water/reports/${id}/preview`);
+      const report = await res.json();
+
+      document.getElementById('doc-viewer-title').innerText = "INDUSTRIAL WATER USAGE REPORT — MONTHLY";
+      document.getElementById('doc-viewer-subtitle').innerText = (report.industryName || "North Assembly Plant") + " | " + (report.periodName || "August 2026");
+      document.getElementById('doc-viewer-pdf-btn').href = window.WaterAPI ? window.WaterAPI.getReportPdfUrl(id) : `http://localhost:8080/api/water/reports/${id}/pdf`;
+
+      const fresh = report.totalFreshWater || 0;
+      const waste = report.totalWastewaterGenerated || (fresh * 0.75);
+      const reused = report.totalReusedWater || 0;
+      const loss = report.totalWaterLoss || 0;
+      const avgCto = (report.avgCtoUtilization || 0).toFixed(1);
+      const avgReuse = (report.avgReusePercentage || 0).toFixed(1);
+
+      const paper = document.getElementById('doc-paper-content');
+      paper.innerHTML = `
+        <div class="border-b border-slate-300 pb-4 flex justify-between items-start">
+          <div>
+            <h1 class="text-xl font-bold text-slate-900 tracking-tight">AquaNexus Water Intelligence</h1>
+            <p class="text-sm font-semibold text-emerald-600 uppercase tracking-wide mt-0.5">INDUSTRIAL WATER USAGE REPORT — MONTHLY</p>
+          </div>
+          <div class="text-right text-[11px] text-slate-500">
+            <p><strong>Reporting Period:</strong> ${report.periodName || 'August 2026'}</p>
+            <p><strong>Logs Analyzed:</strong> ${report.totalRecordsCount || 0} daily entries</p>
+          </div>
+        </div>
+
+        <!-- COMPANY DETAILS -->
+        <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-200 text-[11px]">
+          <div><p><strong>Company Name:</strong> ${report.industryName || 'North Assembly Plant'}</p><p><strong>CTO Number:</strong> ${report.cttoNumber || 'CTO-2026-IND-884'}</p></div>
+          <div><p><strong>Report ID:</strong> RPT-${report.id || '101'}</p><p><strong>Generated Date:</strong> ${report.generatedAt ? report.generatedAt.split('T')[0] : '2026-08-31'}</p></div>
+        </div>
+
+        <!-- 1. MONTHLY WATER USAGE -->
+        <div class="space-y-2">
+          <h2 class="text-sm font-bold text-slate-900 border-b border-slate-200 pb-1">1. MONTHLY WATER USAGE SUMMARY</h2>
+          <div class="grid grid-cols-4 gap-3 text-center text-slate-800">
+            <div class="bg-slate-100 p-2.5 rounded border"><p class="text-[10px] text-slate-500">Total Fresh Water</p><p class="text-sm font-bold">${fresh.toLocaleString()} L</p></div>
+            <div class="bg-emerald-50 p-2.5 rounded border border-emerald-200"><p class="text-[10px] text-emerald-700">Total Reused Water</p><p class="text-sm font-bold text-emerald-700">${reused.toLocaleString()} L</p></div>
+            <div class="bg-slate-100 p-2.5 rounded border"><p class="text-[10px] text-slate-500">Total Water Loss</p><p class="text-sm font-bold text-amber-600">${loss.toLocaleString()} L</p></div>
+            <div class="bg-emerald-50 p-2.5 rounded border border-emerald-200"><p class="text-[10px] text-emerald-700">Average Reuse Yield</p><p class="text-sm font-bold text-emerald-700">${avgReuse}%</p></div>
+          </div>
+        </div>
+
+        <!-- 2. CTO COMPLIANCE -->
+        <div class="space-y-2">
+          <h2 class="text-sm font-bold text-slate-900 border-b border-slate-200 pb-1">2. CTO COMPLIANCE PERFORMANCE</h2>
+          <p class="text-slate-700">Over this monthly period, the facility recorded an average CTO Utilization of <strong>${avgCto}%</strong> across ${report.totalRecordsCount || 0} evaluated daily logs. Total Isolation Forest anomalies flagged: <strong>${report.anomalyCount || 0}</strong>.</p>
+        </div>
+
+        <!-- 3. MONTHLY SUMMARY (NO DAILY REUSE RECOMMENDATIONS) -->
+        <div class="space-y-2 bg-slate-50 p-4 rounded-lg border border-slate-200">
+          <h2 class="text-xs font-bold text-slate-900 uppercase">3. MONTHLY EXECUTIVE SUMMARY</h2>
+          <p class="text-slate-600">During ${report.periodName || 'August 2026'}, the facility consumed ${fresh.toLocaleString()} liters of fresh water and reused ${reused.toLocaleString()} liters of water. Average CTO utilization was ${avgCto}%. Management is advised to maintain current recycling loops across production facilities.</p>
+        </div>`;
+
+      document.getElementById('doc-viewer-modal').classList.remove('hidden');
+    } catch (e) {
+      alert("Could not load monthly report document.");
+    }
+  };
+
+  window.handleGenerateReportSubmit = async function(e) {
+    if (e) e.preventDefault();
+    const btn = document.getElementById('btn-gen-report');
+    btn.disabled = true;
+    btn.innerText = "Compiling PDF...";
+
+    const preset = document.getElementById('gen-preset').value;
+    let startDate = null, endDate = null;
+
+    if (preset === 'CURRENT_MONTH') {
+      startDate = '2026-08-01';
+      endDate = new Date().toISOString().split('T')[0];
+    } else if (preset === 'LAST_MONTH') {
+      startDate = '2026-07-01';
+      endDate = '2026-07-31';
+    } else {
+      startDate = document.getElementById('gen-start-date').value;
+      endDate = document.getElementById('gen-end-date').value;
+    }
+
+    const periodName = document.getElementById('gen-period-name').value || (preset === 'CURRENT_MONTH' ? 'August 2026' : (preset === 'LAST_MONTH' ? 'July 2026' : 'Custom Period'));
+
+    try {
+      let report = null;
+      if (window.WaterAPI && window.WaterAPI.generateMonthlyReport) {
+        report = await window.WaterAPI.generateMonthlyReport(startDate, endDate, periodName);
+      } else {
+        const res = await fetch('http://localhost:8080/api/water/reports/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ startDate, endDate, periodName })
+        });
+        report = await res.json();
+      }
+
+      window.closeReportGenModal();
+      loadReportsData();
+    } catch (err) {
+      window.closeReportGenModal();
+      loadReportsData();
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = `<span class="material-symbols-outlined text-sm">picture_as_pdf</span> Compile PDF Report`;
+  };
+</script>

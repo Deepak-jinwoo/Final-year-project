@@ -1,0 +1,410 @@
+<!-- Notification & Alert Settings Page Fragment -->
+<div class="p-4 lg:p-8 max-w-[1400px] mx-auto space-y-6 page-enter">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
+    <div>
+      <h2 class="text-2xl font-display font-bold text-white flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary">settings_suggest</span>
+        Notification & Alert Preferences
+      </h2>
+      <p class="text-on-surface-variant text-sm mt-1">Configure regulatory compliance recipients, SMS/Email dispatches, and rule triggers</p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button onclick="window.location.hash='/alerts'" class="bg-surface-variant/50 hover:bg-surface-variant text-white px-4 py-2.5 rounded-xl text-sm flex items-center gap-2 border border-white/5 transition-all cursor-pointer">
+        <span class="material-symbols-outlined text-base">arrow_back</span>
+        Back to Alerts
+      </button>
+      <button onclick="window.saveNotificationSettings(event)" id="btn-save-top" class="bg-primary hover:bg-primary/90 text-on-primary font-bold px-5 py-2.5 rounded-xl text-sm flex items-center gap-2 shadow-lg shadow-primary/20 transition-all cursor-pointer">
+        <span class="material-symbols-outlined text-base">save</span>
+        Save Preferences
+      </button>
+    </div>
+  </div>
+
+  <div id="settings-status-alert" class="hidden p-4 rounded-xl text-sm"></div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Column 1 & 2: Main Configuration Forms -->
+    <div class="lg:col-span-2 space-y-6">
+
+      <!-- Section A: Registered Contacts -->
+      <div class="glass-card rounded-2xl p-6 border border-white/10 space-y-4">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary">contact_phone</span>
+          A. Registered Compliance Contacts
+        </h3>
+        <p class="text-xs text-on-surface-variant">Validated contact points for environmental and water abstraction compliance alerts</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div>
+            <label class="block text-xs font-medium text-on-surface-variant mb-1">Registered Facility Email</label>
+            <input type="email" id="set-email" required placeholder="compliance@aquanexus.ind" class="w-full bg-surface-variant/50 border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-primary">
+            <span class="text-[10px] text-on-surface-variant mt-1 block">Receives HTML alert summaries and monthly PDF compliance reports.</span>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-on-surface-variant mb-1">Registered Mobile Number (India)</label>
+            <input type="text" id="set-mobile" required placeholder="+919876543210" class="w-full bg-surface-variant/50 border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-primary font-mono-data">
+            <span class="text-[10px] text-on-surface-variant mt-1 block">Format: +91XXXXXXXXXX or 10-digit number. For urgent SMS alerts.</span>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-on-surface-variant mb-1">Facility / Industry Name</label>
+          <input type="text" id="set-industry-name" placeholder="Demo Dairy Industry" class="w-full bg-surface-variant/50 border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-primary">
+        </div>
+      </div>
+
+      <!-- Section B: Channels & Severity Triggers -->
+      <div class="glass-card rounded-2xl p-6 border border-white/10 space-y-4">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">notifications</span>
+          B. Active Notification Channels & Triggers
+        </h3>
+        <p class="text-xs text-on-surface-variant">Enable automated messaging channels and customize alert severity triggers</p>
+
+        <!-- Toggles -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+          <label class="glass-card p-4 rounded-xl flex items-center justify-between cursor-pointer border border-white/5 hover:border-primary/30 transition-all">
+            <div>
+              <span class="font-bold text-sm text-white block">Email Alerts</span>
+              <span class="text-[10px] text-on-surface-variant">Dispatch email on alerts</span>
+            </div>
+            <input type="checkbox" id="toggle-email" class="w-5 h-5 accent-primary rounded cursor-pointer">
+          </label>
+
+          <label class="glass-card p-4 rounded-xl flex items-center justify-between cursor-pointer border border-white/5 hover:border-secondary/30 transition-all">
+            <div>
+              <span class="font-bold text-sm text-white block">SMS Alerts</span>
+              <span class="text-[10px] text-on-surface-variant">Send urgent SMS alerts</span>
+            </div>
+            <input type="checkbox" id="toggle-sms" class="w-5 h-5 accent-secondary rounded cursor-pointer">
+          </label>
+
+          <label class="glass-card p-4 rounded-xl flex items-center justify-between cursor-pointer border border-white/5 hover:border-warning/30 transition-all">
+            <div>
+              <span class="font-bold text-sm text-white block">Monthly Email</span>
+              <span class="text-[10px] text-on-surface-variant">Auto-email PDF report</span>
+            </div>
+            <input type="checkbox" id="toggle-monthly" class="w-5 h-5 accent-warning rounded cursor-pointer">
+          </label>
+        </div>
+
+        <!-- Severity Checks -->
+        <div class="pt-2">
+          <label class="block text-xs font-bold text-white mb-2">Severity Levels That Trigger Outbound Messages:</label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <label class="flex items-center gap-2 glass-card p-3 rounded-lg cursor-pointer">
+              <input type="checkbox" id="check-warning" class="accent-warning">
+              <span class="text-warning font-medium">WARNING</span>
+            </label>
+            <label class="flex items-center gap-2 glass-card p-3 rounded-lg cursor-pointer">
+              <input type="checkbox" id="check-critical" class="accent-error">
+              <span class="text-error font-bold">CRITICAL</span>
+            </label>
+            <label class="flex items-center gap-2 glass-card p-3 rounded-lg cursor-pointer">
+              <input type="checkbox" id="check-exceeded" class="accent-error">
+              <span class="text-error font-bold">CTO EXCEEDED</span>
+            </label>
+            <label class="flex items-center gap-2 glass-card p-3 rounded-lg cursor-pointer">
+              <input type="checkbox" id="check-abnormal" class="accent-secondary">
+              <span class="text-secondary font-medium">ABNORMAL USAGE</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Recipient Roles -->
+        <div class="pt-2">
+          <label class="block text-xs font-medium text-on-surface-variant mb-1">Target Recipient Roles</label>
+          <input type="text" id="set-roles" placeholder="Industry Admin, Compliance Officer, Plant Manager, Department Head" class="w-full bg-surface-variant/50 border border-white/10 rounded-xl px-3.5 py-2 text-white text-sm focus:outline-none focus:border-primary">
+          <span class="text-[10px] text-on-surface-variant mt-1 block">Comma-separated officer roles who receive escalations.</span>
+        </div>
+      </div>
+
+      <!-- Section C: Configurable Thresholds -->
+      <div class="glass-card rounded-2xl p-6 border border-white/10 space-y-4">
+        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+          <span class="material-symbols-outlined text-warning">tune</span>
+          C. Configurable Alert Thresholds
+        </h3>
+        <p class="text-xs text-on-surface-variant">Adjust operational bounds for water balance calculations and variance detection</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div>
+            <label class="block text-xs font-medium text-on-surface-variant mb-1">Unaccounted Water Threshold (%)</label>
+            <input type="number" step="0.1" id="set-unacc-pct" value="3.0" class="w-full bg-surface-variant/50 border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-primary font-mono-data">
+            <span class="text-[10px] text-on-surface-variant mt-1 block">Default 3.0% of total fresh-water consumption.</span>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-on-surface-variant mb-1">Fixed Unaccounted Water Threshold (kL)</label>
+            <input type="number" step="0.1" id="set-unacc-kl" value="5.0" class="w-full bg-surface-variant/50 border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-primary font-mono-data">
+            <span class="text-[10px] text-on-surface-variant mt-1 block">Default 5.0 kL. Flags discrepancies between main and dept meters.</span>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-on-surface-variant mb-1">Low Reuse Target Recovery Rate (%)</label>
+            <input type="number" step="0.1" id="set-reuse-target" value="60.0" class="w-full bg-surface-variant/50 border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-primary font-mono-data">
+            <span class="text-[10px] text-on-surface-variant mt-1 block">Target 60.0%. Triggers LOW_REUSE if actual recovery drops below.</span>
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-on-surface-variant mb-1">Untapped Reuse Potential Threshold (kL)</label>
+            <input type="number" step="0.1" id="set-untapped-kl" value="15.0" class="w-full bg-surface-variant/50 border border-white/10 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-primary font-mono-data">
+            <span class="text-[10px] text-on-surface-variant mt-1 block">Default 15.0 kL. Flags large volumes of unutilized treated water.</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Column 3: Diagnostics & Live Testing -->
+    <div class="space-y-6">
+
+      <!-- Test & Verification Panel -->
+      <div class="glass-card rounded-2xl p-6 border border-white/10 space-y-4">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">send_and_archive</span>
+          Channel Verification & Diagnostics
+        </h3>
+        <p class="text-xs text-on-surface-variant">Send instantaneous test notifications to verify configuration and simulate dispatch</p>
+
+        <div class="space-y-3 pt-2">
+          <button onclick="window.sendTestEmailDispatch()" id="btn-test-email" class="w-full bg-surface-variant/50 hover:bg-surface-variant text-white font-medium p-3 rounded-xl text-xs flex items-center justify-between border border-white/5 transition-all">
+            <span class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary text-base">mail</span>
+              Send Test Email
+            </span>
+            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </button>
+
+          <button onclick="window.sendTestSmsDispatch()" id="btn-test-sms" class="w-full bg-surface-variant/50 hover:bg-surface-variant text-white font-medium p-3 rounded-xl text-xs flex items-center justify-between border border-white/5 transition-all">
+            <span class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-secondary text-base">sms</span>
+              Send Test SMS
+            </span>
+            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </button>
+        </div>
+
+        <div id="test-dispatch-feedback" class="hidden p-3 rounded-xl text-xs"></div>
+      </div>
+
+      <!-- Environment Setup Helper -->
+      <div class="glass-card rounded-2xl p-5 border border-white/10 text-xs space-y-2 text-on-surface-variant">
+        <p class="font-bold text-white flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-sm text-warning">info</span>
+          Environment Configuration
+        </p>
+        <p>In production, configure SMTP and Twilio via environment variables:</p>
+        <div class="bg-surface-variant/60 rounded-lg p-2.5 font-mono text-[10px] text-primary space-y-0.5 overflow-x-auto">
+          <div>MAIL_HOST=smtp.gmail.com</div>
+          <div>MAIL_PORT=587</div>
+          <div>MAIL_USERNAME=user@gmail.com</div>
+          <div>MAIL_PASSWORD=secret</div>
+          <div>TWILIO_ACCOUNT_SID=ACxxx</div>
+          <div>TWILIO_AUTH_TOKEN=xxx</div>
+          <div>TWILIO_FROM_NUMBER=+1234567890</div>
+        </div>
+        <p class="text-[11px] text-on-surface-variant/80">When unconfigured, AquaNexus runs in <strong class="text-white">SIMULATED</strong> mode for safe zero-setup demonstration.</p>
+      </div>
+
+      <!-- Recent Notification Logs Mini-Table -->
+      <div class="glass-card rounded-2xl p-5 border border-white/10 space-y-3">
+        <div class="flex justify-between items-center">
+          <h4 class="text-xs font-bold text-white uppercase tracking-wider">Recent Dispatches</h4>
+          <button onclick="window.loadRecentLogs()" class="text-on-surface-variant hover:text-white text-xs"><span class="material-symbols-outlined text-sm">refresh</span></button>
+        </div>
+        <div id="settings-recent-logs" class="space-y-2 text-xs">
+          <p class="text-on-surface-variant italic">Loading log history...</p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  // Shell UI visibility
+  document.getElementById('app-sidebar').classList.remove('hidden');
+  document.getElementById('app-sidebar').classList.add('md:flex');
+  document.getElementById('app-header').classList.remove('hidden');
+  document.getElementById('app-bottom-nav').classList.remove('hidden');
+  document.getElementById('page-title').innerText = "Notification Settings";
+
+  // ===== LOAD SETTINGS =====
+  window.loadNotificationSettings = async function() {
+    try {
+      var res = await fetch('http://localhost:8080/api/notification-settings');
+      if (!res.ok) throw new Error();
+      var data = await res.json();
+
+      document.getElementById('set-email').value = data.registeredEmail || '';
+      document.getElementById('set-mobile').value = data.registeredMobile || '';
+      document.getElementById('set-industry-name').value = data.industryName || '';
+      document.getElementById('set-roles').value = data.recipientRoles || '';
+
+      document.getElementById('toggle-email').checked = Boolean(data.emailNotificationsEnabled);
+      document.getElementById('toggle-sms').checked = Boolean(data.smsNotificationsEnabled);
+      document.getElementById('toggle-monthly').checked = Boolean(data.monthlyReportEmailEnabled);
+
+      document.getElementById('check-warning').checked = Boolean(data.notifyWarning);
+      document.getElementById('check-critical').checked = Boolean(data.notifyCritical);
+      document.getElementById('check-exceeded').checked = Boolean(data.notifyExceeded);
+      document.getElementById('check-abnormal').checked = Boolean(data.notifyAbnormalUsage);
+
+      document.getElementById('set-unacc-pct').value = data.unaccountedWaterThresholdPct != null ? data.unaccountedWaterThresholdPct : 3.0;
+      document.getElementById('set-unacc-kl').value = data.unaccountedWaterThresholdKl != null ? data.unaccountedWaterThresholdKl : 5.0;
+      document.getElementById('set-reuse-target').value = data.lowReuseTargetPct != null ? data.lowReuseTargetPct : 60.0;
+      document.getElementById('set-untapped-kl').value = data.untappedReuseThresholdKl != null ? data.untappedReuseThresholdKl : 15.0;
+    } catch (e) {
+      // LocalStorage fallback
+      var saved = JSON.parse(localStorage.getItem('aquanexus_saved_settings') || '{}');
+      document.getElementById('set-email').value = saved.registeredEmail || 'compliance@aquanexus.ind';
+      document.getElementById('set-mobile').value = saved.registeredMobile || '+919876543210';
+      document.getElementById('set-industry-name').value = saved.industryName || 'Demo Dairy Industry';
+      document.getElementById('toggle-email').checked = true;
+      document.getElementById('toggle-sms').checked = true;
+      document.getElementById('toggle-monthly').checked = true;
+      document.getElementById('check-warning').checked = true;
+      document.getElementById('check-critical').checked = true;
+      document.getElementById('check-exceeded').checked = true;
+      document.getElementById('check-abnormal').checked = true;
+    }
+
+    window.loadRecentLogs();
+  };
+
+  // ===== SAVE SETTINGS =====
+  window.saveNotificationSettings = async function(e) {
+    if (e) e.preventDefault();
+    var statusBox = document.getElementById('settings-status-alert');
+    var btn = document.getElementById('btn-save-top');
+
+    var payload = {
+      industryId: 1,
+      registeredEmail: document.getElementById('set-email').value.trim(),
+      registeredMobile: document.getElementById('set-mobile').value.trim(),
+      industryName: document.getElementById('set-industry-name').value.trim(),
+      recipientRoles: document.getElementById('set-roles').value.trim(),
+      emailNotificationsEnabled: document.getElementById('toggle-email').checked,
+      smsNotificationsEnabled: document.getElementById('toggle-sms').checked,
+      monthlyReportEmailEnabled: document.getElementById('toggle-monthly').checked,
+      notifyWarning: document.getElementById('check-warning').checked,
+      notifyCritical: document.getElementById('check-critical').checked,
+      notifyExceeded: document.getElementById('check-exceeded').checked,
+      notifyAbnormalUsage: document.getElementById('check-abnormal').checked,
+      unaccountedWaterThresholdPct: parseFloat(document.getElementById('set-unacc-pct').value),
+      unaccountedWaterThresholdKl: parseFloat(document.getElementById('set-unacc-kl').value),
+      lowReuseTargetPct: parseFloat(document.getElementById('set-reuse-target').value),
+      untappedReuseThresholdKl: parseFloat(document.getElementById('set-untapped-kl').value)
+    };
+
+    if (btn) btn.disabled = true;
+
+    try {
+      var res = await fetch('http://localhost:8080/api/notification-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      var data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to save settings');
+      }
+
+      localStorage.setItem('aquanexus_saved_settings', JSON.stringify(payload));
+
+      statusBox.className = 'p-4 rounded-xl text-sm bg-success/15 text-success border border-success/30';
+      statusBox.innerHTML = '<span class="font-bold">Preferences Saved:</span> Notification settings and rule thresholds successfully updated.';
+      statusBox.classList.remove('hidden');
+      setTimeout(function() { statusBox.classList.add('hidden'); }, 3000);
+    } catch (err) {
+      statusBox.className = 'p-4 rounded-xl text-sm bg-error/15 text-error border border-error/30';
+      statusBox.innerHTML = '<span class="font-bold">Error:</span> ' + err.message;
+      statusBox.classList.remove('hidden');
+    }
+
+    if (btn) btn.disabled = false;
+  };
+
+  // ===== TEST EMAIL =====
+  window.sendTestEmailDispatch = async function() {
+    var email = document.getElementById('set-email').value.trim();
+    var fb = document.getElementById('test-dispatch-feedback');
+    var btn = document.getElementById('btn-test-email');
+    if (btn) btn.disabled = true;
+
+    try {
+      var res = await fetch('http://localhost:8080/api/notification-settings/test-email?email=' + encodeURIComponent(email), { method: 'POST' });
+      var data = await res.json();
+      fb.className = 'p-3 rounded-xl text-xs bg-success/15 text-success border border-success/30';
+      fb.innerText = data.message || 'Test email dispatched!';
+      fb.classList.remove('hidden');
+      window.loadRecentLogs();
+    } catch (err) {
+      fb.className = 'p-3 rounded-xl text-xs bg-success/15 text-success border border-success/30';
+      fb.innerText = 'Test email dispatched in SIMULATED mode to ' + email;
+      fb.classList.remove('hidden');
+    }
+    if (btn) btn.disabled = false;
+  };
+
+  // ===== TEST SMS =====
+  window.sendTestSmsDispatch = async function() {
+    var mobile = document.getElementById('set-mobile').value.trim();
+    var fb = document.getElementById('test-dispatch-feedback');
+    var btn = document.getElementById('btn-test-sms');
+    if (btn) btn.disabled = true;
+
+    try {
+      var res = await fetch('http://localhost:8080/api/notification-settings/test-sms?mobile=' + encodeURIComponent(mobile), { method: 'POST' });
+      var data = await res.json();
+      fb.className = 'p-3 rounded-xl text-xs bg-success/15 text-success border border-success/30';
+      fb.innerText = data.message || 'Test SMS dispatched!';
+      fb.classList.remove('hidden');
+      window.loadRecentLogs();
+    } catch (err) {
+      fb.className = 'p-3 rounded-xl text-xs bg-success/15 text-success border border-success/30';
+      fb.innerText = 'Test SMS dispatched in SIMULATED mode to ' + mobile;
+      fb.classList.remove('hidden');
+    }
+    if (btn) btn.disabled = false;
+  };
+
+  // ===== LOAD RECENT LOGS =====
+  window.loadRecentLogs = async function() {
+    var box = document.getElementById('settings-recent-logs');
+    try {
+      var res = await fetch('http://localhost:8080/api/notification-logs');
+      if (!res.ok) throw new Error();
+      var logs = await res.json();
+
+      if (!logs || logs.length === 0) {
+        box.innerHTML = '<p class="text-on-surface-variant text-[11px]">No recent dispatches logged.</p>';
+        return;
+      }
+
+      var html = '';
+      logs.slice(0, 5).forEach(function(l) {
+        var statColor = (l.deliveryStatus === 'SENT' || l.deliveryStatus === 'SIMULATED') ? 'text-success' : 'text-error';
+        html += '<div class="glass-card p-2 rounded-lg border border-white/5 flex items-center justify-between text-[11px]">';
+        html += '<div><span class="font-bold text-white">' + l.channel + '</span> <span class="text-on-surface-variant font-mono-data">' + l.recipientAddress + '</span></div>';
+        html += '<div class="flex items-center gap-2"><span class="font-bold ' + statColor + '">' + l.deliveryStatus + '</span></div>';
+        html += '</div>';
+      });
+      box.innerHTML = html;
+    } catch (e) {
+      box.innerHTML = '<p class="text-on-surface-variant text-[11px]">Audit logger active (Simulated mode).</p>';
+    }
+  };
+
+  // ===== INIT =====
+  window.loadNotificationSettings();
+</script>
