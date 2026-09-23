@@ -5,22 +5,39 @@ import com.aquanexus.dto.WaterReuseRecommendationDTO;
 import com.aquanexus.model.WaterDailyRecord;
 import com.aquanexus.repository.WaterDailyRecordRepository;
 import com.aquanexus.repository.WaterAlertRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 /**
  * Domain-Specific AI Assistant Service for AquaNexus.
- * Analyzes real database metrics, CTO compliance, anomalies, and ML forecasts
- * to answer user queries strictly with actual user-entered data. Does NOT invent values.
+ * Combines real database metrics, CTO compliance, anomalies, and ML forecasts
+ * with LLM intelligence (via NVIDIA NIM API) to answer user queries dynamically.
  */
 @Service
 public class AIAssistantService {
+
+    private static final Logger log = LoggerFactory.getLogger(AIAssistantService.class);
 
     private final WaterDailyRecordRepository recordRepository;
     private final WaterAlertRepository alertRepository;
     private final WaterCalculationService calculationService;
     private final WaterReuseRecommendationService recommendationService;
+    private final RestTemplate restTemplate;
+
+    @Value("${app.ai.nvidia.api-key:}")
+    private String nvidiaApiKey;
+
+    @Value("${app.ai.nvidia.base-url:https://integrate.api.nvidia.com/v1}")
+    private String nvidiaBaseUrl;
+
+    @Value("${app.ai.nvidia.model:openai/gpt-oss-20b}")
+    private String nvidiaModel;
 
     public AIAssistantService(WaterDailyRecordRepository recordRepository,
                               WaterAlertRepository alertRepository,
@@ -30,6 +47,7 @@ public class AIAssistantService {
         this.alertRepository = alertRepository;
         this.calculationService = calculationService;
         this.recommendationService = recommendationService;
+        this.restTemplate = new RestTemplate();
     }
 
     public Map<String, Object> processUserPrompt(String prompt) {
@@ -59,10 +77,55 @@ public class AIAssistantService {
         long activeAlerts = summary.getActiveAlerts();
         long anomalies = summary.getAnomaliesDetected();
 
+        // Build context for LLM
+        String systemContext = String.format(
+            "You are AquaNexus AI, an enterprise industrial water management assistant.\n" +
+            "Answer user questions accurately using these real database metrics:\n" +
+            "- Total Records: %d\n" +
+            "- Total Fresh Water Consumed: %.1f L\n" +
+            "- Total Wastewater Generated: %.1f L\n" +
+            "- Total Water Reused: %.1f L\n" +
+            "- Overall Reuse Percentage: %.1f%%\n" +
+            "- Total Water Loss: %.1f L\n" +
+            "- Overall CTO Utilization: %.1f%% (Status: %s)\n" +
+            "- Active Alerts: %d, Anomalies Detected: %d\n" +
+            "- Latest Record Department: %s, Date: %s, Fresh Consumed: %.1f L, Reused: %.1f L\n" +
+            "Respond concisely with markdown formatting.",
+            recordCount, totalFresh, summary.getTotalWastewaterGenerated(), totalReused,
+            reusePct, totalLoss, ctoUtil, ctoStatus, activeAlerts, anomalies,
+            latest.getDepartment() != null ? latest.getDepartment() : "Production",
+            latest.getDate() != null ? latest.getDate().toString() : "Today",
+            latest.getFreshWaterConsumed() != null ? latest.getFreshWaterConsumed() : 0.0,
+            latest.getReusedWater() != null ? latest.getReusedWater() : 0.0
+        );
+
+        // Try calling NVIDIA NIM LLM API if key is present
+        if (nvidiaApiKey != null && !nvidiaApiKey.isBlank()) {
+            try {
+                String llmAnswer = callNvidiaLLM(prompt, systemContext);
+                if (llmAnswer != null && !llmAnswer.isBlank()) {
+                    response.put("success", true);
+                    response.put("intent", "LLM_RESPONSE");
+                    response.put("message", llmAnswer);
+                    response.put("metrics", Map.of(
+                            "hasData", true,
+                            "recordCount", recordCount,
+                            "totalFreshConsumed", totalFresh,
+                            "totalReusedWater", totalReused,
+                            "overallCtoUtilization", ctoUtil,
+                            "overallComplianceStatus", ctoStatus
+                    ));
+                    return response;
+                }
+            } catch (Exception e) {
+                log.warn("NVIDIA NIM API call failed, falling back to domain logic: {}", e.getMessage());
+            }
+        }
+
         StringBuilder answer = new StringBuilder();
         String intent = "GENERAL_INQUIRY";
 
-        // Intent Classification & Response Generation
+        // Intent Classification & Response Generation (Fallback)
         if (query.contains("usage") || query.contains("consumed") || query.contains("current water") || query.contains("how much water") || query.contains("today")) {
             intent = "WATER_USAGE";
             answer.append("### 📊 Actual Water Consumption Analysis\n\n");
@@ -192,5 +255,38 @@ public class AIAssistantService {
         ));
 
         return response;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String callNvidiaLLM(String userPrompt, String systemContext) {
+        String url = nvidiaBaseUrl.endsWith("/") ? nvidiaBaseUrl + "chat/completions" : nvidiaBaseUrl + "/chat/completions";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(nvidiaApiKey.trim());
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", nvidiaModel != null && !nvidiaModel.isBlank() ? nvidiaModel.trim() : "openai/gpt-oss-20b");
+
+        List<Map<String, String>> messages = new ArrayList<>();
+        messages.add(Map.of("role", "system", "content", systemContext));
+        messages.add(Map.of("role", "user", "content", userPrompt));
+        requestBody.put("messages", messages);
+        requestBody.put("temperature", 0.5);
+        requestBody.put("max_tokens", 1024);
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+        ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
+
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+            List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
+            if (choices != null && !choices.isEmpty()) {
+                Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+                if (message != null && message.get("content") != null) {
+                    return message.get("content").toString();
+                }
+            }
+        }
+        return null;
     }
 }

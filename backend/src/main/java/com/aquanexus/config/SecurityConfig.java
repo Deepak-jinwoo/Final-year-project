@@ -45,6 +45,7 @@ public class SecurityConfig {
                                  "/api/auth/register",
                                  "/api/auth/google",
                                  "/api/ml/**",
+                                 "/api/ai/**",
                                  "/api/water/**",
                                  "/api/alerts/**",
                                  "/api/notification-settings/**",

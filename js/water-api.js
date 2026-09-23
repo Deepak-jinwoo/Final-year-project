@@ -166,6 +166,19 @@ window.WaterAPI = (() => {
     return res.json();
   }
 
+  async function sendAIChat(prompt) {
+    const token = localStorage.getItem('aquanexus_jwt');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${HOST}/api/ai/chat`, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify({ prompt })
+    });
+    return res.json();
+  }
+
   return {
     submitRecord,
     getRecords,
