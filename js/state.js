@@ -153,9 +153,13 @@ window.AppState = (() => {
     emit('loading', true);
 
     try {
+      const token = localStorage.getItem('aquanexus_jwt');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch(`${HOST}/api/water/records`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: headers,
         body: JSON.stringify(payload)
       });
 

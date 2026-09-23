@@ -205,7 +205,8 @@
       // Sync active unread alerts badge
       async function syncAlertBadge() {
         try {
-          const res = await fetch('http://localhost:8080/api/alerts/summary');
+          const host = window.AQUANEXUS_API_BASE || 'https://final-year-project-as9l.onrender.com';
+          const res = await fetch(`${host}/api/alerts/summary`);
           if (res.ok) {
             const data = await res.json();
             const badge = document.getElementById('top-notification-badge');
