@@ -207,6 +207,13 @@ tbody tr {
   z-index: 10;
 }
 
+/* === Strict Mobile Responsive Sidebar Guard === */
+@media (max-width: 767px) {
+  #app-sidebar {
+    display: none !important;
+  }
+}
+
 /* === Login-specific layout === */
 body.login-mode {
   display: flex;

@@ -88,6 +88,19 @@ const Router = (() => {
       const isAuthLayout = route === '/login' || route === '/register';
       document.body.classList.toggle('login-mode', isAuthLayout);
 
+      const sidebar = document.getElementById('app-sidebar');
+      const header = document.getElementById('app-header');
+      const bottomNav = document.getElementById('app-bottom-nav');
+
+      if (!isAuthLayout) {
+        if (sidebar) {
+          sidebar.classList.remove('hidden');
+          sidebar.classList.add('hidden', 'md:flex');
+        }
+        if (header) header.classList.remove('hidden');
+        if (bottomNav) bottomNav.classList.remove('hidden');
+      }
+
       // Update navigation active states
       updateNav(route);
 
