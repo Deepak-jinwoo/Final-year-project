@@ -203,22 +203,43 @@
       if (window.Auth) window.Auth.restoreSession();
 
       // Sync active unread alerts badge
+      // Badge count = new alerts since the user last visited Alerts Center
+      window.AQUANEXUS_ALERT_LAST_SEEN_KEY = 'aquanexus_alerts_last_seen_count';
+
+      function getLastSeenCount() {
+        return parseInt(localStorage.getItem(window.AQUANEXUS_ALERT_LAST_SEEN_KEY) || '0', 10);
+      }
+
+      function updateBadgeUI(totalOpen) {
+        const badge = document.getElementById('top-notification-badge');
+        if (!badge) return;
+        const lastSeen = getLastSeenCount();
+        // Show new alerts since user last visited: anything above what they last saw
+        const unseen = Math.max(0, totalOpen - lastSeen);
+        if (unseen > 0) {
+          badge.innerText = unseen > 99 ? '99+' : unseen;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+      }
+
+      // Called by alerts.html when the page loads — marks all current alerts as "seen"
+      window.markAlertsAsSeen = function(totalOpen) {
+        localStorage.setItem(window.AQUANEXUS_ALERT_LAST_SEEN_KEY, String(totalOpen || 0));
+        updateBadgeUI(totalOpen || 0);
+      };
+
       async function syncAlertBadge() {
         try {
           const host = window.AQUANEXUS_API_BASE || 'https://final-year-project-as9l.onrender.com';
           const res = await fetch(`${host}/api/alerts/summary`);
           if (res.ok) {
             const data = await res.json();
-            const badge = document.getElementById('top-notification-badge');
-            if (badge) {
-              const count = data.totalOpen || 0;
-              badge.innerText = count;
-              if (count > 0) {
-                badge.classList.remove('hidden');
-              } else {
-                badge.classList.add('hidden');
-              }
-            }
+            const totalOpen = data.totalOpen || 0;
+            // Store raw count globally so alerts page can call markAsSeen with it
+            window._aquanexus_current_total_open = totalOpen;
+            updateBadgeUI(totalOpen);
           }
         } catch (e) {}
       }

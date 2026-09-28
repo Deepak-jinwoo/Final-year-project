@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,8 +58,80 @@ public class AIAssistantService {
         DashboardSummaryDTO summary = calculationService.getDashboardSummary(30);
         List<WaterDailyRecord> records = recordRepository.findAllOrderByDateDesc();
 
-        // Empty State Check
-        if (records.isEmpty()) {
+        boolean hasRecords = !records.isEmpty();
+        String systemContext;
+
+        if (hasRecords) {
+            WaterDailyRecord latest = records.get(0);
+            int recordCount = records.size();
+            double totalFresh = summary.getTotalFreshConsumed();
+            double totalReused = summary.getTotalReusedWater();
+            double totalLoss = summary.getTotalWaterLoss();
+            double reusePct = summary.getOverallReusePercentage();
+            double ctoUtil = summary.getOverallCtoUtilization();
+            String ctoStatus = summary.getOverallComplianceStatus();
+            long activeAlerts = summary.getActiveAlerts();
+            long anomalies = summary.getAnomaliesDetected();
+
+            systemContext = String.format(
+                "You are AquaNexus AI, an enterprise industrial water management assistant.\n" +
+                "Answer user questions accurately using these real database metrics:\n" +
+                "- Total Records: %d\n" +
+                "- Total Fresh Water Consumed: %.1f L\n" +
+                "- Total Wastewater Generated: %.1f L\n" +
+                "- Total Water Reused: %.1f L\n" +
+                "- Overall Reuse Percentage: %.1f%%\n" +
+                "- Total Water Loss: %.1f L\n" +
+                "- Overall CTO Utilization: %.1f%% (Status: %s)\n" +
+                "- Active Alerts: %d, Anomalies Detected: %d\n" +
+                "- Latest Record Department: %s, Date: %s, Fresh Consumed: %.1f L, Reused: %.1f L\n" +
+                "Respond concisely with markdown formatting. You can also answer general engineering, conservation, math, logic, and general knowledge questions.",
+                recordCount, totalFresh, summary.getTotalWastewaterGenerated(), totalReused,
+                reusePct, totalLoss, ctoUtil, ctoStatus, activeAlerts, anomalies,
+                latest.getDepartment() != null ? latest.getDepartment() : "Production",
+                latest.getDate() != null ? latest.getDate().toString() : "Today",
+                latest.getFreshWaterConsumed() != null ? latest.getFreshWaterConsumed() : 0.0,
+                latest.getReusedWater() != null ? latest.getReusedWater() : 0.0
+            );
+        } else {
+            systemContext =
+                "You are AquaNexus AI, an enterprise industrial water management assistant.\n" +
+                "Currently, 0 water consumption entries have been recorded yet in the AquaNexus system.\n" +
+                "If the user asks about specific plant usage or CTO compliance metrics, inform them that no daily records have been logged yet and suggest visiting the Consumption page.\n" +
+                "Otherwise, answer general questions, water conservation tips, engineering calculations, mathematics, logic, or general knowledge accurately and helpfully using markdown.";
+        }
+
+        // Try calling NVIDIA NIM LLM API if key is present
+        if (nvidiaApiKey != null && !nvidiaApiKey.isBlank()) {
+            try {
+                String llmAnswer = callNvidiaLLM(prompt, systemContext);
+                if (llmAnswer != null && !llmAnswer.isBlank()) {
+                    response.put("success", true);
+                    response.put("intent", "LLM_RESPONSE");
+                    response.put("message", llmAnswer);
+                    if (hasRecords) {
+                        response.put("metrics", Map.of(
+                                "hasData", true,
+                                "recordCount", records.size(),
+                                "totalFreshConsumed", summary.getTotalFreshConsumed(),
+                                "totalReusedWater", summary.getTotalReusedWater(),
+                                "overallCtoUtilization", summary.getOverallCtoUtilization(),
+                                "overallComplianceStatus", summary.getOverallComplianceStatus()
+                        ));
+                    } else {
+                        response.put("metrics", Map.of("hasData", false));
+                    }
+                    return response;
+                }
+            } catch (org.springframework.web.client.HttpStatusCodeException e) {
+                log.error("NVIDIA NIM API HTTP error: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
+            } catch (Exception e) {
+                log.warn("NVIDIA NIM API call failed, falling back to domain logic: {}", e.getMessage());
+            }
+        }
+
+        // Domain Logic Fallback: Empty State Check
+        if (!hasRecords) {
             response.put("success", true);
             response.put("intent", "EMPTY_STATE");
             response.put("message", "### 💧 AquaNexus AI Assistant Notice\n\nNo water usage records are currently available in the database.\n\nPlease navigate to **[Consumption Records](#/consumption)** and submit a daily entry to begin real-time AI monitoring and CTO compliance tracking.");
@@ -76,51 +149,6 @@ public class AIAssistantService {
         String ctoStatus = summary.getOverallComplianceStatus();
         long activeAlerts = summary.getActiveAlerts();
         long anomalies = summary.getAnomaliesDetected();
-
-        // Build context for LLM
-        String systemContext = String.format(
-            "You are AquaNexus AI, an enterprise industrial water management assistant.\n" +
-            "Answer user questions accurately using these real database metrics:\n" +
-            "- Total Records: %d\n" +
-            "- Total Fresh Water Consumed: %.1f L\n" +
-            "- Total Wastewater Generated: %.1f L\n" +
-            "- Total Water Reused: %.1f L\n" +
-            "- Overall Reuse Percentage: %.1f%%\n" +
-            "- Total Water Loss: %.1f L\n" +
-            "- Overall CTO Utilization: %.1f%% (Status: %s)\n" +
-            "- Active Alerts: %d, Anomalies Detected: %d\n" +
-            "- Latest Record Department: %s, Date: %s, Fresh Consumed: %.1f L, Reused: %.1f L\n" +
-            "Respond concisely with markdown formatting.",
-            recordCount, totalFresh, summary.getTotalWastewaterGenerated(), totalReused,
-            reusePct, totalLoss, ctoUtil, ctoStatus, activeAlerts, anomalies,
-            latest.getDepartment() != null ? latest.getDepartment() : "Production",
-            latest.getDate() != null ? latest.getDate().toString() : "Today",
-            latest.getFreshWaterConsumed() != null ? latest.getFreshWaterConsumed() : 0.0,
-            latest.getReusedWater() != null ? latest.getReusedWater() : 0.0
-        );
-
-        // Try calling NVIDIA NIM LLM API if key is present
-        if (nvidiaApiKey != null && !nvidiaApiKey.isBlank()) {
-            try {
-                String llmAnswer = callNvidiaLLM(prompt, systemContext);
-                if (llmAnswer != null && !llmAnswer.isBlank()) {
-                    response.put("success", true);
-                    response.put("intent", "LLM_RESPONSE");
-                    response.put("message", llmAnswer);
-                    response.put("metrics", Map.of(
-                            "hasData", true,
-                            "recordCount", recordCount,
-                            "totalFreshConsumed", totalFresh,
-                            "totalReusedWater", totalReused,
-                            "overallCtoUtilization", ctoUtil,
-                            "overallComplianceStatus", ctoStatus
-                    ));
-                    return response;
-                }
-            } catch (Exception e) {
-                log.warn("NVIDIA NIM API call failed, falling back to domain logic: {}", e.getMessage());
-            }
-        }
 
         StringBuilder answer = new StringBuilder();
         String intent = "GENERAL_INQUIRY";
@@ -282,8 +310,15 @@ public class AIAssistantService {
             List<Map<String, Object>> choices = (List<Map<String, Object>>) response.getBody().get("choices");
             if (choices != null && !choices.isEmpty()) {
                 Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-                if (message != null && message.get("content") != null) {
-                    return message.get("content").toString();
+                if (message != null) {
+                    Object content = message.get("content");
+                    if (content != null && !content.toString().isBlank()) {
+                        return content.toString();
+                    }
+                    Object reasoning = message.get("reasoning_content");
+                    if (reasoning != null && !reasoning.toString().isBlank()) {
+                        return reasoning.toString();
+                    }
                 }
             }
         }

@@ -104,6 +104,11 @@ const Router = (() => {
       // Update navigation active states
       updateNav(route);
 
+      // Clear alert badge count when user visits Alerts Center
+      if (route === '/alerts' && typeof window.markAlertsAsSeen === 'function') {
+        window.markAlertsAsSeen(window._aquanexus_current_total_open || 0);
+      }
+
       // Fire page-specific initializers
       if (window.AquaNexus && window.AquaNexus.onPageLoad) {
         window.AquaNexus.onPageLoad(route);

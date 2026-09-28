@@ -277,7 +277,8 @@
         if (stat && stat !== 'ALL') query += 'status=' + encodeURIComponent(stat) + '&';
         if (dept && dept !== 'ALL') query += 'department=' + encodeURIComponent(dept) + '&';
         if (type && type !== 'ALL') query += 'type=' + encodeURIComponent(type) + '&';
-        var res = await fetch('http://localhost:8080/api/alerts' + query);
+        var host = window.AQUANEXUS_API_BASE || 'https://final-year-project-as9l.onrender.com';
+        var res = await fetch(host + '/api/alerts' + query);
         currentAlerts = await res.json();
       }
       renderAlertsTable(currentAlerts);
@@ -354,14 +355,20 @@
 
   // ===== UPDATE KPIS =====
   async function updateKpis() {
+    var host = window.AQUANEXUS_API_BASE || 'https://final-year-project-as9l.onrender.com';
     try {
-      var res = await fetch('http://localhost:8080/api/alerts/summary');
+      var res = await fetch(host + '/api/alerts/summary');
       if (res.ok) {
         var s = await res.json();
         document.getElementById('kpi-total-alerts').innerText = s.totalAlerts || 0;
         document.getElementById('kpi-open-critical').innerHTML = (s.openCritical || 0) + (s.openCritical > 0 ? ' <span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>' : '');
         document.getElementById('kpi-open-warning').innerText = s.openWarning || 0;
         document.getElementById('kpi-resolved-count').innerText = s.resolvedCount || 0;
+
+        // User is currently visiting the Alerts Center — mark all current open alerts as seen
+        if (typeof window.markAlertsAsSeen === 'function') {
+          window.markAlertsAsSeen(s.totalOpen || 0);
+        }
         return;
       }
     } catch (e) {}
@@ -376,6 +383,10 @@
     document.getElementById('kpi-open-critical').innerHTML = openCrit + (openCrit > 0 ? ' <span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>' : '');
     document.getElementById('kpi-open-warning').innerText = openWarn;
     document.getElementById('kpi-resolved-count').innerText = resolved;
+
+    if (typeof window.markAlertsAsSeen === 'function') {
+      window.markAlertsAsSeen(openCrit + openWarn);
+    }
   }
 
   // ===== FILTER LOCALLY =====
@@ -548,7 +559,8 @@
     if (btn) { btn.disabled = true; btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">sync</span> Sending...'; }
 
     try {
-      var res = await fetch('http://localhost:8080/api/alerts/' + selectedAlert.id + '/resend-notification', { method: 'POST' });
+      var host = window.AQUANEXUS_API_BASE || 'https://final-year-project-as9l.onrender.com';
+      var res = await fetch(host + '/api/alerts/' + selectedAlert.id + '/resend-notification', { method: 'POST' });
       var data = await res.json();
       alert('Notification triggered: ' + (data.message || 'Dispatched'));
       loadNotificationLogsForDetail(selectedAlert.id);
