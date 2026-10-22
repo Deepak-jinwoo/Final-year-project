@@ -198,12 +198,21 @@ window.WaterAPI = (() => {
     const headers = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
-    const res = await fetch(`${HOST}/api/ai/chat`, {
-      method: 'POST',
-      headers: headers,
-      body: JSON.stringify({ prompt })
-    });
-    return res.json();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6500);
+    try {
+      const res = await fetch(`${HOST}/api/ai/chat`, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({ prompt }),
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
+      return res.json();
+    } catch (err) {
+      clearTimeout(timeout);
+      throw err;
+    }
   }
 
   return {
