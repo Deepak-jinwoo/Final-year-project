@@ -277,7 +277,8 @@
         if (window.WaterAPI) {
           data = await window.WaterAPI.getDashboardSummary(days);
         } else {
-          const res = await fetch(`http://localhost:8080/api/water/dashboard-summary?days=${days}`);
+          const host = window.AQUANEXUS_API_BASE || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080' : 'https://final-year-project-as9l.onrender.com');
+          const res = await fetch(`${host}/api/water/dashboard-summary?days=${days}`);
           data = await res.json();
         }
       } catch (backendErr) {
@@ -331,7 +332,8 @@
         if (window.AppState) {
           data = await window.AppState.fetchSummary(days);
         } else {
-          const res = await fetch(`http://localhost:8080/api/water/dashboard-summary?days=${days}`);
+          const host = window.AQUANEXUS_API_BASE || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080' : 'https://final-year-project-as9l.onrender.com');
+          const res = await fetch(`${host}/api/water/dashboard-summary?days=${days}`);
           if (res.ok) data = await res.json();
         }
 

@@ -246,6 +246,21 @@
 
       syncAlertBadge();
       setInterval(syncAlertBadge, 15000);
+
+      // Pre-warm backend and cache records on startup so page navigation is instantaneous
+      async function preWarmRecordsCache() {
+        try {
+          const host = window.AQUANEXUS_API_BASE || 'https://final-year-project-as9l.onrender.com';
+          const res = await fetch(`${host}/api/water/records`);
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+              localStorage.setItem('aquanexus_cached_daily_records', JSON.stringify(data));
+            }
+          }
+        } catch (e) {}
+      }
+      preWarmRecordsCache();
     });
   </script>
 </body>

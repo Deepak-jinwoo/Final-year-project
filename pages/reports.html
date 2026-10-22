@@ -60,7 +60,10 @@
         <span class="material-symbols-outlined text-primary text-sm">today</span>
         Daily Industrial Water Usage Reports
       </h3>
-      <span class="text-xs text-on-surface-variant" id="daily-count-label">0 daily log(s)</span>
+      <div class="flex items-center gap-3">
+        <span id="daily-sync-indicator" class="text-xs text-primary/80 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>Live sync</span>
+        <span class="text-xs text-on-surface-variant" id="daily-count-label">0 daily log(s)</span>
+      </div>
     </div>
 
     <div class="overflow-x-auto w-full">
@@ -302,11 +305,41 @@
     return filtered;
   }
 
+  // Hydrate immediately from cache on script execution (0ms rendering)
+  try {
+    const cachedDailyStr = localStorage.getItem('aquanexus_cached_daily_records');
+    if (cachedDailyStr) {
+      const cached = JSON.parse(cachedDailyStr);
+      if (Array.isArray(cached) && cached.length > 0) {
+        window._allDailyRecords = cached;
+        renderDailyTable(window._allDailyRecords);
+      }
+    }
+    const cachedMonthlyStr = localStorage.getItem('aquanexus_cached_monthly_reports');
+    if (cachedMonthlyStr) {
+      const cached = JSON.parse(cachedMonthlyStr);
+      if (Array.isArray(cached) && cached.length > 0) {
+        window._allMonthlyReports = cached;
+        renderMonthlyTable(window._allMonthlyReports);
+      }
+    }
+  } catch (e) {}
+
   loadReportsData();
 
   async function loadReportsData() {
-    await loadDailyReports();
-    await loadMonthlyReports();
+    const syncEl = document.getElementById('daily-sync-indicator');
+    if (syncEl) syncEl.classList.remove('hidden');
+
+    // Run parallel fetch for daily records & monthly history
+    await Promise.allSettled([
+      loadDailyReports(),
+      loadMonthlyReports()
+    ]);
+
+    if (syncEl) {
+      syncEl.innerHTML = '<span class="text-xs text-on-surface-variant font-normal">Synced</span>';
+    }
   }
 
   // ===== 1. LOAD DAILY REPORTS =====
@@ -317,15 +350,31 @@
       if (window.WaterAPI && window.WaterAPI.getRecords) {
         records = await window.WaterAPI.getRecords();
       } else {
-        const res = await fetch('http://localhost:8080/api/water/records');
+        const host = window.AQUANEXUS_API_BASE || 'https://final-year-project-as9l.onrender.com';
+        const res = await fetch(`${host}/api/water/records`);
         records = await res.json();
       }
+      if (Array.isArray(records) && records.length > 0) {
+        try {
+          localStorage.setItem('aquanexus_cached_daily_records', JSON.stringify(records));
+        } catch (e) {}
+      }
     } catch (err) {
-      records = JSON.parse(localStorage.getItem('aquanexus_local_records') || '[]');
+      console.warn("Daily records fetch failed, falling back to cache:", err);
+      try {
+        records = JSON.parse(localStorage.getItem('aquanexus_cached_daily_records') || '[]');
+      } catch (e) {
+        records = [];
+      }
     }
 
-    window._allDailyRecords = Array.isArray(records) ? records : [];
-    renderDailyTable(window._allDailyRecords);
+    if (Array.isArray(records) && records.length > 0) {
+      window._allDailyRecords = records;
+      renderDailyTable(window._allDailyRecords);
+    } else if (!window._allDailyRecords || window._allDailyRecords.length === 0) {
+      window._allDailyRecords = [];
+      renderDailyTable([]);
+    }
   }
 
   function renderDailyTable(records) {
@@ -346,13 +395,13 @@
     document.getElementById('daily-count-label').innerText = records.length + " daily report(s)";
 
     tbody.innerHTML = records.map(r => {
-      const pdfUrl = window.WaterAPI ? window.WaterAPI.getDailyReportPdfUrl(r.id) : `http://localhost:8080/api/water/reports/daily/${r.id}/pdf`;
+      const pdfUrl = window.WaterAPI ? window.WaterAPI.getDailyReportPdfUrl(r.id) : `https://final-year-project-as9l.onrender.com/api/water/reports/daily/${r.id}/pdf`;
       const dateStr = r.date || 'Today';
       const ctoUtil = r.ctoUtilization != null ? r.ctoUtilization.toFixed(1) : '0.0';
       const st = r.complianceStatus || 'SAFE';
 
       let stBadge = '';
-      if (st === 'CRITICAL') stBadge = '<span class="px-2 py-0.5 rounded bg-error/10 text-error font-bold border border-error/20">CRITICAL</span>';
+      if (st === 'CRITICAL' || st === 'EXCEEDED') stBadge = '<span class="px-2 py-0.5 rounded bg-error/10 text-error font-bold border border-error/20">CRITICAL</span>';
       else if (st === 'WARNING') stBadge = '<span class="px-2 py-0.5 rounded bg-warning/10 text-warning font-bold border border-warning/20">WARNING</span>';
       else stBadge = '<span class="px-2 py-0.5 rounded bg-success/10 text-success font-bold border border-success/20">SAFE</span>';
 
@@ -394,15 +443,31 @@
       if (window.WaterAPI && window.WaterAPI.getReportHistory) {
         reports = await window.WaterAPI.getReportHistory();
       } else {
-        const res = await fetch('http://localhost:8080/api/water/reports/history');
+        const host = window.AQUANEXUS_API_BASE || 'https://final-year-project-as9l.onrender.com';
+        const res = await fetch(`${host}/api/water/reports/history`);
         reports = await res.json();
       }
+      if (Array.isArray(reports) && reports.length > 0) {
+        try {
+          localStorage.setItem('aquanexus_cached_monthly_reports', JSON.stringify(reports));
+        } catch (e) {}
+      }
     } catch (err) {
-      reports = JSON.parse(localStorage.getItem('aquanexus_local_reports') || '[]');
+      console.warn("Monthly reports fetch failed, falling back to cache:", err);
+      try {
+        reports = JSON.parse(localStorage.getItem('aquanexus_cached_monthly_reports') || '[]');
+      } catch (e) {
+        reports = [];
+      }
     }
 
-    window._allMonthlyReports = Array.isArray(reports) ? reports : [];
-    renderMonthlyTable(window._allMonthlyReports);
+    if (Array.isArray(reports) && reports.length > 0) {
+      window._allMonthlyReports = reports;
+      renderMonthlyTable(window._allMonthlyReports);
+    } else if (!window._allMonthlyReports || window._allMonthlyReports.length === 0) {
+      window._allMonthlyReports = [];
+      renderMonthlyTable([]);
+    }
   }
 
   function renderMonthlyTable(reports) {
@@ -464,16 +529,17 @@
   window.viewDailyReportDoc = async function(recordId) {
     try {
       let d = null;
+      const host = window.AQUANEXUS_API_BASE || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080' : 'https://final-year-project-as9l.onrender.com');
       if (window.WaterAPI && window.WaterAPI.getDailyReportPreview) {
         d = await window.WaterAPI.getDailyReportPreview(recordId);
       } else {
-        const res = await fetch(`http://localhost:8080/api/water/reports/daily/${recordId}/preview`);
+        const res = await fetch(`${host}/api/water/reports/daily/${recordId}/preview`);
         d = await res.json();
       }
 
       document.getElementById('doc-viewer-title').innerText = "INDUSTRIAL WATER USAGE REPORT — DAILY";
       document.getElementById('doc-viewer-subtitle').innerText = (d.companyName || "North Assembly Plant") + " | " + d.date;
-      document.getElementById('doc-viewer-pdf-btn').href = window.WaterAPI ? window.WaterAPI.getDailyReportPdfUrl(recordId) : `http://localhost:8080/api/water/reports/daily/${recordId}/pdf`;
+      document.getElementById('doc-viewer-pdf-btn').href = window.WaterAPI ? window.WaterAPI.getDailyReportPdfUrl(recordId) : `${host}/api/water/reports/daily/${recordId}/pdf`;
 
       const fresh = d.freshWaterConsumed || 0;
       const waste = d.wastewaterGenerated || 0;
@@ -569,12 +635,13 @@
   // ===== VIEW MONTHLY REPORT DOCUMENT IN VIEWER (NO DAILY REUSE RECS) =====
   window.viewMonthlyReportDoc = async function(id) {
     try {
-      const res = await fetch(`http://localhost:8080/api/water/reports/${id}/preview`);
+      const host = window.AQUANEXUS_API_BASE || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080' : 'https://final-year-project-as9l.onrender.com');
+      const res = await fetch(`${host}/api/water/reports/${id}/preview`);
       const report = await res.json();
 
       document.getElementById('doc-viewer-title').innerText = "INDUSTRIAL WATER USAGE REPORT — MONTHLY";
       document.getElementById('doc-viewer-subtitle').innerText = (report.industryName || "North Assembly Plant") + " | " + (report.periodName || "August 2026");
-      document.getElementById('doc-viewer-pdf-btn').href = window.WaterAPI ? window.WaterAPI.getReportPdfUrl(id) : `http://localhost:8080/api/water/reports/${id}/pdf`;
+      document.getElementById('doc-viewer-pdf-btn').href = window.WaterAPI ? window.WaterAPI.getReportPdfUrl(id) : `${host}/api/water/reports/${id}/pdf`;
 
       const fresh = report.totalFreshWater || 0;
       const waste = report.totalWastewaterGenerated || (fresh * 0.75);
@@ -658,7 +725,8 @@
       if (window.WaterAPI && window.WaterAPI.generateMonthlyReport) {
         report = await window.WaterAPI.generateMonthlyReport(startDate, endDate, periodName);
       } else {
-        const res = await fetch('http://localhost:8080/api/water/reports/generate', {
+        const host = window.AQUANEXUS_API_BASE || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080' : 'https://final-year-project-as9l.onrender.com');
+        const res = await fetch(`${host}/api/water/reports/generate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ startDate, endDate, periodName })

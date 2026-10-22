@@ -308,7 +308,8 @@
 
   async function loadMLInsights() {
     try {
-      const res = await fetch('http://localhost:8080/api/ml/predict/1');
+      const host = window.AQUANEXUS_API_BASE || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080' : 'https://final-year-project-as9l.onrender.com');
+      const res = await fetch(`${host}/api/ml/predict/1`);
       if (res.ok) {
         const data = await res.json();
         const predFresh = Math.round(data.predicted_fresh_water || data.predictedFreshWater || 0);
@@ -346,7 +347,8 @@
     let dto = null;
 
     try {
-      const res = await fetch('http://localhost:8080/api/water/recommendations');
+      const host = window.AQUANEXUS_API_BASE || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080' : 'https://final-year-project-as9l.onrender.com');
+      const res = await fetch(`${host}/api/water/recommendations`);
       if (res.ok) {
         dto = await res.json();
       }

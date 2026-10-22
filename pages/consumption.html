@@ -319,7 +319,8 @@
       if (window.WaterAPI && window.WaterAPI.getCompanyProfile) {
         profile = await window.WaterAPI.getCompanyProfile();
       } else {
-        const res = await fetch('http://localhost:8080/api/water/company-profile');
+        const host = window.AQUANEXUS_API_BASE || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080' : 'https://final-year-project-as9l.onrender.com');
+        const res = await fetch(`${host}/api/water/company-profile`);
         profile = await res.json();
       }
 
@@ -501,7 +502,8 @@
       if (window.WaterAPI) {
         await window.WaterAPI.deleteRecord(id);
       } else {
-        await fetch('http://localhost:8080/api/water/records/' + id, { method: 'DELETE' });
+        const host = window.AQUANEXUS_API_BASE || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080' : 'https://final-year-project-as9l.onrender.com');
+        await fetch(`${host}/api/water/records/${id}`, { method: 'DELETE' });
       }
     } catch (err) {
       // Backend offline: delete from localStorage
@@ -524,7 +526,8 @@
   // ===== CSV EXPORT =====
   window.exportCSVData = function() {
     var end = new Date().toISOString().split('T')[0];
-    window.location.href = 'http://localhost:8080/api/water/reports/export/csv?startDate=2025-01-01&endDate=' + end;
+    var host = window.AQUANEXUS_API_BASE || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080' : 'https://final-year-project-as9l.onrender.com');
+    window.location.href = host + '/api/water/reports/export/csv?startDate=2025-01-01&endDate=' + end;
   };
 
   // ===== PDF REPORT MODAL =====
@@ -585,7 +588,8 @@
     statusEl.classList.remove('hidden');
 
     try {
-      var url = 'http://localhost:8080/api/water/reports/export/pdf?startDate=' + startDate + '&endDate=' + endDate;
+      var host = window.AQUANEXUS_API_BASE || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080' : 'https://final-year-project-as9l.onrender.com');
+      var url = host + '/api/water/reports/export/pdf?startDate=' + startDate + '&endDate=' + endDate;
       if (department) url += '&department=' + encodeURIComponent(department);
       if (preparedBy) url += '&preparedBy=' + encodeURIComponent(preparedBy);
 

@@ -13,18 +13,45 @@ window.WaterAPI = (() => {
   const HOST = window.AQUANEXUS_API_BASE;
   const API_BASE = `${HOST}/api/water`;
 
+  function getAuthHeaders() {
+    const headers = { 'Content-Type': 'application/json' };
+    const token = localStorage.getItem('aquanexus_jwt');
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
+  }
+
   async function apiPost(endpoint, body) {
-    const res = await fetch(`${API_BASE}${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    return res.json();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    try {
+      const res = await fetch(`${API_BASE}${endpoint}`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
+      return res.json();
+    } catch (err) {
+      clearTimeout(timeout);
+      throw err;
+    }
   }
 
   async function apiGet(endpoint) {
-    const res = await fetch(`${API_BASE}${endpoint}`);
-    return res.json();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    try {
+      const res = await fetch(`${API_BASE}${endpoint}`, {
+        headers: getAuthHeaders(),
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
+      return res.json();
+    } catch (err) {
+      clearTimeout(timeout);
+      throw err;
+    }
   }
 
   // Submit a new daily water record

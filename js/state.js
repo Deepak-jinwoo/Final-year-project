@@ -15,11 +15,24 @@ window.AppState = (() => {
   const HOST = window.AQUANEXUS_API_BASE;
   const listeners = {};
 
+  // Hydrate initial state from localStorage cache for instant UI rendering
+  let cachedRecords = [];
+  let cachedSummary = null;
+  let cachedAlertsSummary = { totalOpen: 0, openCritical: 0, openWarning: 0, totalAlerts: 0, resolvedCount: 0 };
+  try {
+    const r = localStorage.getItem('aquanexus_cached_daily_records');
+    if (r) cachedRecords = JSON.parse(r);
+    const s = localStorage.getItem('aquanexus_cached_summary');
+    if (s) cachedSummary = JSON.parse(s);
+    const a = localStorage.getItem('aquanexus_cached_alerts_summary');
+    if (a) cachedAlertsSummary = JSON.parse(a);
+  } catch (e) {}
+
   let state = {
-    records: [],
-    summary: null,
+    records: cachedRecords,
+    summary: cachedSummary,
     alerts: [],
-    alertsSummary: { totalOpen: 0, openCritical: 0, openWarning: 0, totalAlerts: 0, resolvedCount: 0 },
+    alertsSummary: cachedAlertsSummary,
     recommendations: null,
     activeTimeframe: 30,
     isLoading: false,
@@ -57,6 +70,9 @@ window.AppState = (() => {
       const res = await fetch(`${HOST}/api/water/dashboard-summary?days=${days}`);
       if (res.ok) {
         state.summary = await res.json();
+        try {
+          localStorage.setItem('aquanexus_cached_summary', JSON.stringify(state.summary));
+        } catch (e) {}
         emit('summaryUpdated', state.summary);
         return state.summary;
       }
@@ -73,6 +89,11 @@ window.AppState = (() => {
       const res = await fetch(`${HOST}/api/water/records${query}`);
       if (res.ok) {
         state.records = await res.json();
+        if (!department || department === 'ALL') {
+          try {
+            localStorage.setItem('aquanexus_cached_daily_records', JSON.stringify(state.records));
+          } catch (e) {}
+        }
         emit('recordsUpdated', state.records);
         return state.records;
       }
