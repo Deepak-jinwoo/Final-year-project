@@ -37,7 +37,7 @@ public class AIAssistantService {
     @Value("${app.ai.nvidia.base-url:https://integrate.api.nvidia.com/v1}")
     private String nvidiaBaseUrl;
 
-    @Value("${app.ai.nvidia.model:meta/llama-3.1-8b-instruct}")
+    @Value("${app.ai.nvidia.model:openai/gpt-oss-20b}")
     private String nvidiaModel;
 
     public AIAssistantService(WaterDailyRecordRepository recordRepository,
@@ -48,11 +48,7 @@ public class AIAssistantService {
         this.alertRepository = alertRepository;
         this.calculationService = calculationService;
         this.recommendationService = recommendationService;
-
-        org.springframework.http.client.SimpleClientHttpRequestFactory factory = new org.springframework.http.client.SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(3500); // 3.5s connect timeout
-        factory.setReadTimeout(5000);    // 5s max read timeout for fast response
-        this.restTemplate = new RestTemplate(factory);
+        this.restTemplate = new RestTemplate();
     }
 
     public Map<String, Object> processUserPrompt(String prompt) {
@@ -298,15 +294,14 @@ public class AIAssistantService {
         headers.setBearerAuth(nvidiaApiKey.trim());
 
         Map<String, Object> requestBody = new HashMap<>();
-        String chosenModel = nvidiaModel != null && !nvidiaModel.isBlank() ? nvidiaModel.trim() : "meta/llama-3.1-8b-instruct";
-        requestBody.put("model", chosenModel);
+        requestBody.put("model", nvidiaModel != null && !nvidiaModel.isBlank() ? nvidiaModel.trim() : "openai/gpt-oss-20b");
 
         List<Map<String, String>> messages = new ArrayList<>();
         messages.add(Map.of("role", "system", "content", systemContext));
         messages.add(Map.of("role", "user", "content", userPrompt));
         requestBody.put("messages", messages);
-        requestBody.put("temperature", 0.3);
-        requestBody.put("max_tokens", 350);
+        requestBody.put("temperature", 0.5);
+        requestBody.put("max_tokens", 1024);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
         ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
