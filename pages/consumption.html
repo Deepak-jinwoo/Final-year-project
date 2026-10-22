@@ -451,7 +451,8 @@
     records.forEach(function(r) {
       totalFresh += r.freshWaterConsumed || 0;
       totalReused += r.reusedWater || 0;
-      totalLoss += r.waterLoss || 0;
+      var curLoss = (r.waterLoss != null && r.waterLoss > 0) ? r.waterLoss : Math.max(0, (r.wastewaterGenerated || 0) - (r.reusedWater || 0));
+      totalLoss += curLoss;
       if (r.isAnomaly) anomalies++;
     });
     var avgReuse = totalFresh > 0 ? ((totalReused / totalFresh) * 100).toFixed(1) : "0.0";
@@ -466,7 +467,7 @@
     var html = '';
     records.forEach(function(r) {
       var badge = '';
-      if (r.complianceStatus === 'CRITICAL') {
+      if (r.complianceStatus === 'CRITICAL' || r.complianceStatus === 'EXCEEDED') {
         badge = '<span class="inline-flex items-center gap-1.5 bg-error/10 text-error text-xs font-medium px-2.5 py-1 rounded-full border border-error/20"><span class="w-1.5 h-1.5 rounded-full bg-error animate-pulse"></span> Critical</span>';
       } else if (r.complianceStatus === 'WARNING') {
         badge = '<span class="inline-flex items-center gap-1.5 bg-warning/10 text-warning text-xs font-medium px-2.5 py-1 rounded-full border border-warning/20"><span class="w-1.5 h-1.5 rounded-full bg-warning"></span> Warning</span>';
@@ -477,8 +478,17 @@
         '<span class="inline-flex items-center gap-1 bg-error/20 text-error text-xs font-bold px-2 py-0.5 rounded border border-error/40"><span class="material-symbols-outlined text-xs">warning</span> Possible Leak</span>' :
         '<span class="text-xs text-on-surface-variant">Normal</span>';
 
-      var rp = r.reusePercentage != null ? r.reusePercentage.toFixed(1) : '0.0';
-      var cu = r.ctoUtilization != null ? r.ctoUtilization.toFixed(1) : '0.0';
+      var rp = (r.reusePercentage != null && r.reusePercentage > 0) 
+        ? r.reusePercentage.toFixed(1) 
+        : (r.freshWaterConsumed > 0 ? ((r.reusedWater / r.freshWaterConsumed) * 100).toFixed(1) : '0.0');
+
+      var cu = (r.ctoUtilization != null && r.ctoUtilization > 0) 
+        ? r.ctoUtilization.toFixed(1) 
+        : ((r.ctoLimit && r.ctoLimit > 0) ? ((r.freshWaterConsumed / r.ctoLimit) * 100).toFixed(1) : '0.0');
+
+      var itemLoss = (r.waterLoss != null && r.waterLoss > 0) 
+        ? r.waterLoss 
+        : Math.max(0, (r.wastewaterGenerated || 0) - (r.reusedWater || 0));
 
       html += '<tr class="hover:bg-white/5 transition-colors">';
       html += '<td class="px-5 py-3.5"><div class="font-bold text-white">' + r.date + '</div><div class="text-xs text-on-surface-variant">' + (r.department || '') + '</div></td>';
@@ -487,7 +497,7 @@
       html += '<td class="px-5 py-3.5 font-mono-data text-white">' + (r.reusedWater || 0).toLocaleString() + '</td>';
       html += '<td class="px-5 py-3.5"><span class="font-medium text-white">' + rp + '%</span></td>';
       html += '<td class="px-5 py-3.5"><span class="font-medium text-white">' + cu + '%</span></td>';
-      html += '<td class="px-5 py-3.5 font-mono-data text-warning">' + (r.waterLoss || 0).toLocaleString() + '</td>';
+      html += '<td class="px-5 py-3.5 font-mono-data text-warning">' + (itemLoss || 0).toLocaleString() + '</td>';
       html += '<td class="px-5 py-3.5 text-right"><div class="flex items-center justify-end gap-2">' + leak + '<button onclick="window.deleteWaterRecord(' + r.id + ')" class="text-on-surface-variant hover:text-error transition-colors p-1 rounded-lg hover:bg-error/10" title="Delete Record"><span class="material-symbols-outlined text-base">delete</span></button></div></td>';
       html += '</tr>';
     });

@@ -253,10 +253,21 @@
     window.AquaNexus.generateHeatmap();
   }
 
-  // Load dynamic summary from MySQL backend
-  loadDashboardData(30);
+  let currentTimeframe = 30;
 
-  function switchTimeframe(days) {
+  // Hydrate immediately from cache for 0ms rendering
+  try {
+    const cachedSummary = localStorage.getItem('aquanexus_cached_summary');
+    if (cachedSummary) {
+      renderDashboardUI(JSON.parse(cachedSummary));
+    }
+  } catch (e) {}
+
+  // Fetch live summary on page load
+  loadDashboardSummary(currentTimeframe);
+
+  window.switchTimeframe = function(days) {
+    currentTimeframe = days;
     [7, 30, 90].forEach(d => {
       const btn = document.getElementById(`btn-tf-${d}`);
       if (btn) {
@@ -267,208 +278,134 @@
         }
       }
     });
-    loadDashboardData(days);
+    loadDashboardSummary(days);
+  };
+
+  async function loadDashboardSummary(days = 30) {
+    try {
+      const host = window.AQUANEXUS_API_BASE || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080' : 'https://final-year-project-as9l.onrender.com');
+      let data = null;
+
+      if (window.AppState) {
+        data = await window.AppState.fetchSummary(days);
+      } else {
+        const res = await fetch(`${host}/api/water/dashboard-summary?days=${days}`);
+        if (res.ok) data = await res.json();
+      }
+
+      if (data) {
+        try { localStorage.setItem('aquanexus_cached_summary', JSON.stringify(data)); } catch (e) {}
+        renderDashboardUI(data);
+      }
+
+      // Fetch XGBoost Prediction
+      try {
+        const mlRes = await fetch(`${host}/api/ml/predict/1`);
+        if (mlRes.ok) {
+          const mlData = await mlRes.json();
+          if (mlData && (mlData.predicted_fresh_water || mlData.predictedFreshWater)) {
+            const pred = Math.round(mlData.predicted_fresh_water || mlData.predictedFreshWater);
+            document.getElementById('dash-xgb-pred').innerText = pred.toLocaleString();
+            document.getElementById('dash-xgb-conf').innerText = mlData.model_confidence || mlData.modelConfidence || 'Active';
+          }
+        }
+      } catch (e) {}
+
+      // Fetch Water Reuse Recommendations
+      try {
+        const recRes = await fetch(`${host}/api/water/recommendations`);
+        if (recRes.ok) {
+          const recData = await recRes.json();
+          if (recData && recData.hasData) {
+            document.getElementById('dash-rec-avail').innerText = `${(recData.availableReusableWater || 0).toLocaleString()} L`;
+            document.getElementById('dash-rec-saving').innerText = `${(recData.totalPotentialFreshSaving || 0).toLocaleString()} L/day`;
+            document.getElementById('dash-rec-top').innerText = recData.topRecommendedReuse || 'Landscaping';
+            document.getElementById('dash-rec-quality').innerText = recData.qualityVerificationStatus || 'Required';
+          }
+        }
+      } catch (e) {}
+
+    } catch (err) {
+      console.error("Error loading dashboard summary:", err);
+    }
   }
 
-  async function loadDashboardData(days = 30) {
-    try {
-      let data;
-      try {
-        if (window.WaterAPI) {
-          data = await window.WaterAPI.getDashboardSummary(days);
-        } else {
-          const host = window.AQUANEXUS_API_BASE || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080' : 'https://final-year-project-as9l.onrender.com');
-          const res = await fetch(`${host}/api/water/dashboard-summary?days=${days}`);
-          data = await res.json();
-        }
-      } catch (backendErr) {
-        // Fallback: Compute dashboard summary from local storage records
-        const localRecords = JSON.parse(localStorage.getItem('aquanexus_local_records') || '[]');
-        let totalFresh = 0, totalReused = 0, totalWaste = 0, totalLoss = 0, anomalies = 0;
-        const alerts = [];
+  function renderDashboardUI(data) {
+    if (!data) return;
 
-        localRecords.forEach(r => {
-          totalFresh += r.freshWaterConsumed || 0;
-          totalReused += r.reusedWater || 0;
-          totalWaste += r.wastewaterGenerated || 0;
-          totalLoss += r.waterLoss || 0;
-          if (r.isAnomaly) {
-            anomalies++;
-            alerts.push({
-              date: r.date,
-              alertType: "LEAKAGE_DETECTED",
-              severity: "WARNING",
-              message: `Possible leakage detected in ${r.department}. Fresh: ${r.freshWaterConsumed}L, Loss: ${r.waterLoss}L`
-            });
-          }
-          if (r.ctoUtilization > 95) {
-            alerts.push({
-              date: r.date,
-              alertType: "CTO_CRITICAL",
-              severity: "CRITICAL",
-              message: `CRITICAL: CTO utilization at ${r.ctoUtilization}% in ${r.department}!`
-            });
-          }
-    let currentTimeframe = 30;
+    // 1. Top Metrics
+    document.getElementById('dash-total-consumed').innerText = (data.totalFreshConsumed || 0).toLocaleString();
+    document.getElementById('dash-total-reused').innerText = (data.totalReusedWater || 0).toLocaleString();
+    document.getElementById('dash-water-loss').innerText = (data.totalWaterLoss || 0).toLocaleString();
+    document.getElementById('dash-fresh-saved').innerText = (data.freshWaterSaved || 0).toLocaleString();
 
-    async function switchTimeframe(days) {
-      currentTimeframe = days;
-      [7, 30, 90].forEach(d => {
-        const btn = document.getElementById(`btn-tf-${d}`);
-        if (btn) {
-          if (d === days) {
-            btn.className = "px-3 py-1 text-sm rounded-md bg-primary/20 text-primary font-medium";
-          } else {
-            btn.className = "px-3 py-1 text-sm rounded-md text-on-surface-variant hover:text-white transition-colors";
-          }
-        }
-      });
-      await loadDashboardSummary(days);
+    const reusePct = (data.overallReusePercentage != null ? data.overallReusePercentage : 0).toFixed(1);
+    const ctoUtil = (data.overallCtoUtilization != null ? data.overallCtoUtilization : 0).toFixed(1);
+
+    document.getElementById('dash-reuse-pct').innerText = `${reusePct}%`;
+    document.getElementById('dash-cto-util').innerText = data.overallComplianceStatus === 'NOT_CONFIGURED' ? 'Not Configured' : `${ctoUtil}%`;
+
+    // 2. Compliance Badge & Card Highlights
+    const badge = document.getElementById('dash-compliance-badge');
+    const cardConsumed = document.getElementById('card-consumed');
+
+    if (data.overallComplianceStatus === 'EXCEEDED') {
+      badge.className = "text-xs text-error font-bold flex items-center bg-error/15 px-2 py-0.5 rounded border border-error/30";
+      badge.innerText = "EXCEEDED (>100%)";
+      if (cardConsumed) cardConsumed.className = "glass-card rounded-2xl p-5 relative overflow-hidden group border border-error/50 shadow-lg shadow-error/20";
+    } else if (data.overallComplianceStatus === 'CRITICAL') {
+      badge.className = "text-xs text-error font-bold flex items-center bg-error/10 px-2 py-0.5 rounded border border-error/20";
+      badge.innerText = "CRITICAL (>95%)";
+      if (cardConsumed) cardConsumed.className = "glass-card rounded-2xl p-5 relative overflow-hidden group border border-error/40 shadow-lg shadow-error/10";
+    } else if (data.overallComplianceStatus === 'WARNING') {
+      badge.className = "text-xs text-warning font-bold flex items-center bg-warning/10 px-2 py-0.5 rounded border border-warning/20";
+      badge.innerText = "WARNING (80-95%)";
+      if (cardConsumed) cardConsumed.className = "glass-card rounded-2xl p-5 relative overflow-hidden group border border-warning/40 shadow-lg shadow-warning/10";
+    } else {
+      badge.className = "text-xs text-success font-bold flex items-center bg-success/10 px-2 py-0.5 rounded border border-success/20";
+      badge.innerText = "SAFE (<80%)";
+      if (cardConsumed) cardConsumed.className = "glass-card rounded-2xl p-5 relative overflow-hidden group";
     }
 
-    async function loadDashboardSummary(days = currentTimeframe) {
-      try {
-        let data = null;
-        if (window.AppState) {
-          data = await window.AppState.fetchSummary(days);
-        } else {
-          const host = window.AQUANEXUS_API_BASE || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:8080' : 'https://final-year-project-as9l.onrender.com');
-          const res = await fetch(`${host}/api/water/dashboard-summary?days=${days}`);
-          if (res.ok) data = await res.json();
-        }
+    // 3. Liquid Capacity Gauge
+    const gaugePct = Math.min(100, Math.round(data.overallCtoUtilization || 0));
+    document.getElementById('gauge-pct').innerText = `${gaugePct}%`;
+    document.getElementById('gauge-label').innerText = data.overallComplianceStatus || 'SAFE';
+    document.getElementById('gauge-alerts').innerText = data.activeAlerts || 0;
+    document.getElementById('gauge-anomalies').innerText = data.anomaliesDetected || 0;
 
-        if (!data) return;
+    const liquidWave = document.getElementById('liquid-wave-bg');
+    if (liquidWave) {
+      const bottomOffset = -100 + gaugePct;
+      liquidWave.style.bottom = `${bottomOffset}%`;
+    }
 
-        // 1. Top Metrics
-        document.getElementById('dash-total-consumed').innerText = (data.totalFreshConsumed || 0).toLocaleString();
-        document.getElementById('dash-total-reused').innerText = (data.totalReusedWater || 0).toLocaleString();
-        document.getElementById('dash-water-loss').innerText = (data.totalWaterLoss || 0).toLocaleString();
-        document.getElementById('dash-fresh-saved').innerText = (data.freshWaterSaved || 0).toLocaleString();
-
-        const reusePct = (data.overallReusePercentage || 0).toFixed(1);
-        const ctoUtil = (data.overallCtoUtilization || 0).toFixed(1);
-
-        document.getElementById('dash-reuse-pct').innerText = `${reusePct}%`;
-        document.getElementById('dash-cto-util').innerText = data.overallComplianceStatus === 'NOT_CONFIGURED' ? 'Not Configured' : `${ctoUtil}%`;
-
-        // 2. Compliance Badge & Card Highlights
-        const badge = document.getElementById('dash-compliance-badge');
-        const cardConsumed = document.getElementById('card-consumed');
-
-        if (data.overallComplianceStatus === 'EXCEEDED') {
-          badge.className = "text-xs text-error font-bold flex items-center bg-error/15 px-2 py-0.5 rounded border border-error/30";
-          badge.innerText = "EXCEEDED (>100%)";
-          if (cardConsumed) cardConsumed.className = "glass-card rounded-2xl p-5 relative overflow-hidden group border border-error/50 shadow-lg shadow-error/20";
-        } else if (data.overallComplianceStatus === 'CRITICAL') {
-          badge.className = "text-xs text-error font-bold flex items-center bg-error/10 px-2 py-0.5 rounded border border-error/20";
-          badge.innerText = "CRITICAL (>95%)";
-          if (cardConsumed) cardConsumed.className = "glass-card rounded-2xl p-5 relative overflow-hidden group border border-error/40 shadow-lg shadow-error/10";
-        } else if (data.overallComplianceStatus === 'WARNING') {
-          badge.className = "text-xs text-warning font-bold flex items-center bg-warning/10 px-2 py-0.5 rounded border border-warning/20";
-          badge.innerText = "WARNING (80-95%)";
-          if (cardConsumed) cardConsumed.className = "glass-card rounded-2xl p-5 relative overflow-hidden group border border-warning/40 shadow-lg shadow-warning/10";
-        } else if (data.overallComplianceStatus === 'NOT_CONFIGURED') {
-          badge.className = "text-xs text-on-surface-variant font-medium flex items-center bg-white/5 px-2 py-0.5 rounded border border-white/10";
-          badge.innerText = "CTO Limit Not Set";
-          if (cardConsumed) cardConsumed.className = "glass-card rounded-2xl p-5 relative overflow-hidden group";
-        } else if (data.overallComplianceStatus === 'NO_DATA') {
-          badge.className = "text-xs text-on-surface-variant font-medium flex items-center bg-white/5 px-2 py-0.5 rounded border border-white/10";
-          badge.innerText = "No Data";
-          if (cardConsumed) cardConsumed.className = "glass-card rounded-2xl p-5 relative overflow-hidden group";
-        } else {
-          badge.className = "text-xs text-success font-bold flex items-center bg-success/10 px-2 py-0.5 rounded border border-success/20";
-          badge.innerText = "SAFE (<80%)";
-          if (cardConsumed) cardConsumed.className = "glass-card rounded-2xl p-5 relative overflow-hidden group";
-        }
-
-        // 3. Liquid Capacity Gauge
-        const gaugePct = Math.min(100, Math.round(data.overallCtoUtilization || 0));
-        document.getElementById('gauge-pct').innerText = data.overallComplianceStatus === 'NOT_CONFIGURED' ? 'N/A' : `${gaugePct}%`;
-        document.getElementById('gauge-label').innerText = data.overallComplianceStatus === 'NO_DATA' ? 'Awaiting Data' : (data.overallComplianceStatus || 'SAFE');
-        document.getElementById('gauge-alerts').innerText = data.activeAlerts || 0;
-        document.getElementById('gauge-anomalies').innerText = data.anomaliesDetected || 0;
-
-        const liquidWave = document.getElementById('liquid-wave-bg');
-        if (liquidWave) {
-          const bottomOffset = -100 + (data.overallComplianceStatus === 'NO_DATA' ? 0 : gaugePct);
-          liquidWave.style.bottom = `${bottomOffset}%`;
-        }
-
-        // 4. Alert Banner Rendering (Strictly Real Database Alerts)
-        const bannerBox = document.getElementById('alert-banners-container');
-        if (bannerBox) {
-          if (data.recentAlerts && data.recentAlerts.length > 0) {
-            bannerBox.classList.remove('hidden');
-            bannerBox.innerHTML = data.recentAlerts.slice(0, 2).map(a => {
-              const isCritical = a.severity === 'CRITICAL';
-              const bg = isCritical ? 'bg-error/15 border-error/30 text-error' : 'bg-warning/15 border-warning/30 text-warning';
-              const icon = isCritical ? 'error' : 'warning';
-              return `
-                <div class="p-3.5 rounded-xl border flex items-center justify-between ${bg}">
-                  <div class="flex items-center gap-2.5">
-                    <span class="material-symbols-outlined text-lg">${icon}</span>
-                    <div>
-                      <span class="text-xs font-bold uppercase tracking-wider block">${(a.alertType || 'ALERT').replace('_', ' ')} — ${a.date || ''}</span>
-                      <span class="text-sm font-medium">${a.message || ''}</span>
-                    </div>
-                  </div>
-                  <button onclick="window.location.hash='/alerts'" class="text-xs font-bold underline cursor-pointer hover:text-white">Inspect in Alerts</button>
+    // 4. Alert Banner Rendering
+    const bannerBox = document.getElementById('alert-banners-container');
+    if (bannerBox) {
+      if (data.recentAlerts && data.recentAlerts.length > 0) {
+        bannerBox.classList.remove('hidden');
+        bannerBox.innerHTML = data.recentAlerts.slice(0, 2).map(a => {
+          const isCritical = a.severity === 'CRITICAL';
+          const bg = isCritical ? 'bg-error/15 border-error/30 text-error' : 'bg-warning/15 border-warning/30 text-warning';
+          const icon = isCritical ? 'error' : 'warning';
+          return `
+            <div class="p-3.5 rounded-xl border flex items-center justify-between ${bg}">
+              <div class="flex items-center gap-2.5">
+                <span class="material-symbols-outlined text-lg">${icon}</span>
+                <div>
+                  <span class="text-xs font-bold uppercase tracking-wider block">${(a.alertType || 'ALERT').replace('_', ' ')} — ${a.date || ''}</span>
+                  <span class="text-sm font-medium">${a.message || ''}</span>
                 </div>
-              `;
-            }).join('');
-          } else {
-            bannerBox.classList.add('hidden');
-            bannerBox.innerHTML = '';
-          }
-        }
-
-        // 5. XGBoost Prediction
-        try {
-          const mlRes = await fetch('http://localhost:8080/api/ml/predict/1');
-          if (mlRes.ok) {
-            const mlData = await mlRes.json();
-            if (mlData && mlData.predicted_fresh_water) {
-              document.getElementById('dash-xgb-pred').innerText = Math.round(mlData.predicted_fresh_water).toLocaleString();
-              document.getElementById('dash-xgb-conf').innerText = mlData.model_confidence || 'Active';
-            } else {
-              document.getElementById('dash-xgb-pred').innerText = "N/A";
-              document.getElementById('dash-xgb-conf').innerText = "Insufficient Data";
-            }
-          } else {
-            document.getElementById('dash-xgb-pred').innerText = "N/A";
-            document.getElementById('dash-xgb-conf').innerText = "Insufficient Data";
-          }
-        } catch (err) {
-          document.getElementById('dash-xgb-pred').innerText = "N/A";
-          document.getElementById('dash-xgb-conf').innerText = "Awaiting Data";
-        }
-
-        // 6. Water Reuse Recommendations Summary
-        try {
-          const recRes = await fetch('http://localhost:8080/api/water/recommendations');
-          if (recRes.ok) {
-            const recData = await recRes.json();
-            if (recData && recData.hasData) {
-              document.getElementById('dash-rec-avail').innerText = `${(recData.availableReusableWater || 0).toLocaleString()} L`;
-              document.getElementById('dash-rec-saving').innerText = `${(recData.totalPotentialFreshSaving || 0).toLocaleString()} L/day`;
-              document.getElementById('dash-rec-top').innerText = recData.topRecommendedReuse || 'Landscaping';
-              document.getElementById('dash-rec-quality').innerText = recData.qualityVerificationStatus || 'Required';
-            } else {
-              document.getElementById('dash-rec-avail').innerText = `0 L`;
-              document.getElementById('dash-rec-saving').innerText = `0 L/day`;
-              document.getElementById('dash-rec-top').innerText = `None`;
-              document.getElementById('dash-rec-quality').innerText = `Not Available`;
-            }
-          }
-        } catch (recErr) {
-          document.getElementById('dash-rec-avail').innerText = `0 L`;
-          document.getElementById('dash-rec-saving').innerText = `0 L/day`;
-          document.getElementById('dash-rec-top').innerText = `None`;
-          document.getElementById('dash-rec-quality').innerText = `Not Available`;
-        }
-
-      } catch (err) {
-        console.error("Error loading dashboard summary:", err);
+              </div>
+              <button onclick="window.location.hash='/alerts'" class="text-xs font-bold underline cursor-pointer hover:text-white">Inspect in Alerts</button>
+            </div>
+          `;
+        }).join('');
+      } else {
+        bannerBox.classList.add('hidden');
+        bannerBox.innerHTML = '';
       }
     }
+  }
   </script>

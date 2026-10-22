@@ -397,7 +397,9 @@
     tbody.innerHTML = records.map(r => {
       const pdfUrl = window.WaterAPI ? window.WaterAPI.getDailyReportPdfUrl(r.id) : `https://final-year-project-as9l.onrender.com/api/water/reports/daily/${r.id}/pdf`;
       const dateStr = r.date || 'Today';
-      const ctoUtil = r.ctoUtilization != null ? r.ctoUtilization.toFixed(1) : '0.0';
+      const ctoUtil = (r.ctoUtilization != null && r.ctoUtilization > 0) 
+        ? r.ctoUtilization.toFixed(1) 
+        : ((r.ctoLimit && r.ctoLimit > 0) ? ((r.freshWaterConsumed / r.ctoLimit) * 100).toFixed(1) : '0.0');
       const st = r.complianceStatus || 'SAFE';
 
       let stBadge = '';
